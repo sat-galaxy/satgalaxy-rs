@@ -1,9 +1,9 @@
 # rssat
 **rssat** is a Rust library that provides Rust bindings for multiple popular SAT solvers. Currently supported solvers include:
 
-- [MiniSat](https://github.com/arminbiere/cadical) (2.2.0)
+- [MiniSat](https://github.com/niklasso/minisat) (2.2.0)
 - [Glucose](https://github.com/audemard/glucose) (4.2.1)
-- [CaDiCaL](https://github.com/niklasso/minisat) (2.0.0)
+- [CaDiCaL](https://github.com/arminbiere/cadical) (2.0.0)
 
 We thank the contributors of these excellent projects.
 ## Features

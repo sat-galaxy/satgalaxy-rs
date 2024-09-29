@@ -1,12 +1,14 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-
-use super::base::{Solver, Status};
+#![allow(dead_code)]
 
 include!(concat!(env!("OUT_DIR"), "/minisat_bindings.rs"));
 
-// 你可以在这里为 CaDiCaL::Solver 创建一个更加 Rust 风格的封装
+
+use super::base::{Solver, Status};
+
+
 pub struct MinisatSolver {
     inner: Minisat_StdSimpSolver,
 }
