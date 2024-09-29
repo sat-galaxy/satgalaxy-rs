@@ -8,7 +8,7 @@ pub(self) mod glucose;
 #[cfg(feature = "glucose")]
 pub use glucose::GlucoseSolver;
 #[cfg(feature = "minisat")]
-pub(self) mod minisat;
+pub mod minisat;
 #[cfg(feature = "minisat")]
 pub  use  minisat::MinisatSolver;
 
