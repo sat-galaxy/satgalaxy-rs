@@ -1,0 +1,12 @@
+[submodule "cadical"]
+    path = third_parts/cadical
+    url = https://github.com/arminbiere/cadical.git
+    tag = rel-2.0.0
+[submodule "glucose"]
+    path = third_parts/glucose
+    url = https://github.com/audemard/glucose.git
+    tag = 4.2.1
+[submodule "minisat"]
+    path = third_parts/minisat
+    url = https://github.com/niklasso/minisat.git
+    tag = releases/2.2.0

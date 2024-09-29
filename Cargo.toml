@@ -1,0 +1,17 @@
+[package]
+name = "rssat"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[build-dependencies]
+bindgen = "0.70.1"
+cmake = "0.1"
+patch = "0.7.0"
+
+[features]
+default = ["glucose","minisat","cadical"]
+cadical = []
+minisat = []
+glucose = []

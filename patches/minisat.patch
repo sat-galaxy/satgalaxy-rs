@@ -1,0 +1,296 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ae4da00..b97b44c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -42,7 +42,8 @@ set(MINISAT_LIB_SOURCES
+     minisat/utils/Options.cc
+     minisat/utils/System.cc
+     minisat/core/Solver.cc
+-    minisat/simp/SimpSolver.cc)
++    minisat/simp/SimpSolver.cc
++    minisat/simp/StdSimpSolver.cc)
+ 
+ add_library(minisat-lib-static STATIC ${MINISAT_LIB_SOURCES})
+ add_library(minisat-lib-shared SHARED ${MINISAT_LIB_SOURCES})
+@@ -80,4 +81,4 @@ install(TARGETS minisat-lib-static minisat-lib-shared minisat_core minisat_simp
+ 
+ install(DIRECTORY minisat/mtl minisat/utils minisat/core minisat/simp
+         DESTINATION include/minisat
+-        FILES_MATCHING PATTERN "*.h")
++        FILES_MATCHING PATTERN "*.h*")
+diff --git a/minisat/core/SolverTypes.h b/minisat/core/SolverTypes.h
+index 89986d1..2c6e990 100644
+--- a/minisat/core/SolverTypes.h
++++ b/minisat/core/SolverTypes.h
+@@ -52,7 +52,7 @@ struct Lit {
+     int     x;
+ 
+     // Use this as a constructor:
+-    friend Lit mkLit(Var var, bool sign = false);
++    friend Lit mkLit(Var var, bool sign);
+ 
+     bool operator == (Lit p) const { return x == p.x; }
+     bool operator != (Lit p) const { return x != p.x; }
+@@ -60,7 +60,7 @@ struct Lit {
+ };
+ 
+ 
+-inline  Lit  mkLit     (Var var, bool sign) { Lit p; p.x = var + var + (int)sign; return p; }
++inline  Lit  mkLit     (Var var, bool sign=false) { Lit p; p.x = var + var + (int)sign; return p; }
+ inline  Lit  operator ~(Lit p)              { Lit q; q.x = p.x ^ 1; return q; }
+ inline  Lit  operator ^(Lit p, bool b)      { Lit q; q.x = p.x ^ (unsigned int)b; return q; }
+ inline  bool sign      (Lit p)              { return p.x & 1; }
+diff --git a/minisat/simp/StdSimpSolver.cc b/minisat/simp/StdSimpSolver.cc
+new file mode 100644
+index 0000000..b809a89
+--- /dev/null
++++ b/minisat/simp/StdSimpSolver.cc
+@@ -0,0 +1,147 @@
++
++#include "StdSimpSolver.hpp"
++#include "SimpSolver.h"
++namespace Minisat
++{
++    Lit makeLit(SimpSolver *solver,int val)
++    {
++        int value = abs(val) - 1;
++        while (value>= solver->nVars())
++        {
++            solver->newVar();
++        }
++        return mkLit(value, val < 0);
++    }
++    StdSimpSolver::StdSimpSolver()
++    {
++        this->solver = new SimpSolver();
++    }
++    StdSimpSolver::~StdSimpSolver()
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        delete solver;
++        this->solver = nullptr;
++    }
++    int StdSimpSolver::newVar()
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->newVar();
++    }
++    void StdSimpSolver::releaseVar(int l)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        solver->releaseVar(makeLit(solver,l));
++    }
++
++    bool StdSimpSolver::addClause(const int ps[],size_t length)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        vec<Lit> lits;
++        for (size_t i = 0; i < length; i++)
++        {
++            lits.push(makeLit(solver,ps[i]));
++        }
++        return solver->addClause(lits);
++    }
++    bool StdSimpSolver::addEmptyClause()
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++    }
++    bool StdSimpSolver::addClause(int p)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->addClause(makeLit(solver,p));
++    }
++    bool StdSimpSolver::addClause(int p, int q)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->addClause(makeLit(solver,p), makeLit(solver,q));
++    }
++    bool StdSimpSolver::addClause(int p, int q, int r)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->addClause(makeLit(solver,p), makeLit(solver,q), makeLit(solver,r));
++    }
++    bool StdSimpSolver::addClause(int p, int q, int r, int s)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->addClause(makeLit(solver,p), makeLit(solver,q), makeLit(solver,r), makeLit(solver,s));
++    }
++    bool StdSimpSolver::solve(const std::vector<int> &assumps, bool do_simp, bool turn_off_simp)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        vec<Lit> lits;
++        for (auto &&i : assumps)
++        {
++            lits.push(makeLit(solver,i));
++        }
++        return solver->solve(lits, do_simp, turn_off_simp);
++    }
++    int StdSimpSolver::solveLimited(const std::vector<int> &assumps, bool do_simp, bool turn_off_simp)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        vec<Lit> lits;
++        for (auto &&i : assumps)
++        {
++            lits.push(makeLit(solver,i));
++        }
++        return toInt(solver->solveLimited(lits, do_simp, turn_off_simp));
++    }
++    bool StdSimpSolver::solve(bool do_simp, bool turn_off_simp)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->solve(do_simp, turn_off_simp);
++    }
++    bool StdSimpSolver::solve(int p, bool do_simp, bool turn_off_simp)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->solve(makeLit(solver,p), do_simp, turn_off_simp);
++    }
++    bool StdSimpSolver::solve(int p, int q, bool do_simp, bool turn_off_simp)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->solve(makeLit(solver,p), makeLit(solver,q), do_simp, turn_off_simp);
++    }
++    bool StdSimpSolver::solve(int p, int q, int r, bool do_simp, bool turn_off_simp)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->solve(makeLit(solver,p), makeLit(solver,q), makeLit(solver,r), do_simp, turn_off_simp);
++    }
++    bool StdSimpSolver::eliminate(bool turn_off_elim)
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->eliminate(turn_off_elim);
++    }
++
++    int StdSimpSolver::nAssigns() const
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->nAssigns();
++    }
++    int StdSimpSolver::nClauses() const
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->nClauses();
++    }
++    int StdSimpSolver::nLearnts() const
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->nLearnts();
++    }
++    int StdSimpSolver::nVars() const
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->nVars();
++    }
++    int StdSimpSolver::nFreeVars() const
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        return solver->nFreeVars();
++    }
++    bool StdSimpSolver::value(int val) const
++    {
++        SimpSolver *solver = (SimpSolver *)this->solver;
++        lbool b =solver->model[val];
++        return(b==l_True);
++    }
++}
+\ No newline at end of file
+diff --git a/minisat/simp/StdSimpSolver.hpp b/minisat/simp/StdSimpSolver.hpp
+new file mode 100644
+index 0000000..dae1fe9
+--- /dev/null
++++ b/minisat/simp/StdSimpSolver.hpp
+@@ -0,0 +1,71 @@
++/************************************************************************************[SimpSolver.h]
++Copyright (c) 2006,      Niklas Een, Niklas Sorensson
++Copyright (c) 2007-2010, Niklas Sorensson
++
++Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
++associated documentation files (the "Software"), to deal in the Software without restriction,
++including without limitation the rights to use, copy, modify, merge, publish, distribute,
++sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all copies or
++substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
++NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
++DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
++OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++**************************************************************************************************/
++
++#ifndef Minisat_StdSimpSolver_h
++#define Minisat_StdSimpSolver_h
++
++#include <cstdint>
++#include <cstdio>
++#include <vector>
++namespace Minisat
++{
++
++    //=================================================================================================
++
++    class StdSimpSolver
++    {
++    public:
++        // Constructor/Destructor:
++        //
++        StdSimpSolver();
++        ~StdSimpSolver();
++
++        // Problem specification:
++        //
++        int newVar();
++        void releaseVar(int l);
++        bool addClause(const int ps[],size_t length);
++        bool addEmptyClause();                      // Add the empty clause to the solver.
++        bool addClause(int p);                      // Add a unit clause to the solver.
++        bool addClause(int p, int q);               // Add a binary clause to the solver.
++        bool addClause(int p, int q, int r);        // Add a ternary clause to the solver.
++        bool addClause(int p, int q, int r, int s); // Add a quaternary clause to the solver.
++        bool  value      (int x) const;
++
++        // Solving:
++        //
++        bool solve(const std::vector<int> &assumps, bool do_simp = true, bool turn_off_simp = false);
++        int solveLimited(const std::vector<int> &assumps, bool do_simp = true, bool turn_off_simp = false);
++        bool solve(bool do_simp = true, bool turn_off_simp = false);
++        bool solve(int p, bool do_simp = true, bool turn_off_simp = false);
++        bool solve(int p, int q, bool do_simp = true, bool turn_off_simp = false);
++        bool solve(int p, int q, int r, bool do_simp = true, bool turn_off_simp = false);
++        bool eliminate(bool turn_off_elim = false); // Perform variable elimination based simplification.
++        int nAssigns() const;                       // The current number of assigned literals.
++        int nClauses() const;                       // The current number of original clauses.
++        int nLearnts() const;                       // The current number of learnt clauses.
++        int nVars() const;                          // The current number of variables.
++        int nFreeVars() const;
++    private:
++        void *solver;
++    };
++
++};
++#endif
+diff --git a/minisat/utils/Options.h b/minisat/utils/Options.h
+index 4e71a18..9b470e0 100644
+--- a/minisat/utils/Options.h
++++ b/minisat/utils/Options.h
+@@ -282,15 +282,15 @@ class Int64Option : public Option
+         if (range.begin == INT64_MIN)
+             fprintf(stderr, "imin");
+         else
+-            fprintf(stderr, "%4"PRIi64, range.begin);
++            fprintf(stderr, "%4" PRIi64, range.begin);
+ 
+         fprintf(stderr, " .. ");
+         if (range.end == INT64_MAX)
+             fprintf(stderr, "imax");
+         else
+-            fprintf(stderr, "%4"PRIi64, range.end);
++            fprintf(stderr, "%4" PRIi64, range.end);
+ 
+-        fprintf(stderr, "] (default: %"PRIi64")\n", value);
++        fprintf(stderr, "] (default: %" PRIi64")\n", value);
+         if (verbose){
+             fprintf(stderr, "\n        %s\n", description);
+             fprintf(stderr, "\n");
