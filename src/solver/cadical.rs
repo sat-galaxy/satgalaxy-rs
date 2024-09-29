@@ -1,3 +1,17 @@
+//! The `cadical` module provides access to the `CaDiCaLSolver`.
+//!
+//! This module is enabled when the `minisat` feature is activated.
+//!
+//! # Overview
+//! The `CaDiCaLSolver` struct acts as a wrapper for the [CaDiCaL](https://github.com/arminbiere/cadical) Solver, allowing users to
+//! leverage its functionality for solving SAT problems.
+//!
+//! # Usage
+//! To use the `cadical` module, ensure the `cadical` feature is enabled in your `Cargo.toml`:
+//! ```toml
+//! [dependencies]
+//! rssat = { version = "x.y.z", features = ["cadical"] }
+//! ```
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
@@ -8,6 +22,34 @@ include!(concat!(env!("OUT_DIR"), "/cadical_bindings.rs"));
 
 use super::base::{Solver, Status};
 
+/// `CaDiCaLSolver` is a wrapper for the [CaDiCaL](https://github.com/arminbiere/cadical) Solver .
+/// It also allows creating a `CaDiCaL_Solver` instance for more low-level operations.
+/// This struct is only available when the `cadical` feature is enabled.
+/// # Example
+/// ```rust
+/// use rssat::solver::{CaDiCaLSolver, Status,Solver};
+/// let solver = CaDiCaLSolver::new();
+///     solver.add_clause(&vec![1, 2]);
+///     solver.add_clause(&vec![-1, -2]);
+///     solver.add_clause(&vec![3]);
+/// 
+/// match solver.solve() {
+///    Status::SATISFIABLE(vec) => {
+///         println!("Satisfiable solution: {:?}", vec);
+///     },
+///     Status::UNSATISFIABLE => {
+///         println!("Unsatisfiable");
+///     },
+///     Status::UNKNOWN => {
+///         println!("Unknown");
+///     },
+/// }
+/// ```
+///  # Usage
+///  To use the `CaDiCaLSolver`, ensure the `cadical` feature is enabled in your `Cargo.toml`:
+///  ```toml
+///  [dependencies]
+///  rssat = { version = "x.y.z", features = ["cadical"] }
 pub struct CaDiCaLSolver {
     inner:  CaDiCaL_Solver,
 }
