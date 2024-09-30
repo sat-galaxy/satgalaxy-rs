@@ -70,7 +70,9 @@
 //! 
 //! 
 pub mod solver;
-
+pub  mod  errors;
+#[cfg(feature = "parser")]
+pub mod parser;
 #[cfg(test)]
 mod tests {
     use solver::{Solver, Status};
@@ -84,7 +86,7 @@ mod tests {
         solver.add_clause(&vec![1]);
         solver.add_clause(&vec![-1]);
         match solver.solve() {
-            Status::SATISFIABLE(vec) => {
+            Status::SATISFIABLE(_vec) => {
                 assert_eq!(1,0);
             },
             Status::UNSATISFIABLE => {
@@ -134,4 +136,40 @@ mod tests {
             },
         }
     }
+    #[test]
+    #[cfg(feature="dimacs")]
+    fn dimacs(){
+        use parser::parse_dimacs_cnf;
+
+        let dimacs_content = "c This is a comment
+        p cnf 3 2
+        1 -3 0
+        ";
+            match parse_dimacs_cnf(dimacs_content,false) {
+                Ok(cnf) => {
+                    assert_eq!(cnf.num_vars,3);
+                    assert_eq!(cnf.num_clauses,1);
+                },
+                Err(e) => assert_eq!("result","should be ok"),
+            }
+      
+    }
+    #[test]
+    #[cfg(feature="dimacs")]
+    fn dimacs_strict(){
+        use parser::parse_dimacs_cnf;
+
+        let dimacs_content = "c This is a comment
+        p cnf 2 2
+        1 -3 0
+        ";
+            match parse_dimacs_cnf(dimacs_content,true) {
+                Ok(cnf) => {
+                    assert_eq!("result","should be error")
+                },
+                Err(e) => assert!(true),
+            }
+      
+    }
+
 }

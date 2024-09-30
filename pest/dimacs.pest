@@ -1,0 +1,22 @@
+WHITESPACE = _{ " " | "\t" }
+COMMENT    = _{ "c" ~ (!NEWLINE ~ ANY)*~NEWLINE+ }
+number     = @{
+    "-"? ~ (ASCII_DIGIT+)
+}
+lit        = @{
+    !("0" | "-0") ~ number
+}
+variables=@{
+ASCII_DIGIT+
+}
+clauses=@{
+ASCII_DIGIT+
+}
+def      = {
+    "p cnf" ~ variables ~ clauses ~ NEWLINE+
+}
+cluase = {
+    lit+ ~ "0"
+}
+
+file = { SOI ~ def? ~ (cluase ~ NEWLINE*)* ~ EOI }

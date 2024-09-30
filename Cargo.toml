@@ -1,18 +1,17 @@
 [package]
-name = "rssat"
 authors = ["Xie Zhongtao"]
-version = "0.1.1"
-edition = "2021"
-keywords=["sat","minisat","cadical","glucose","slover"]
 categories = ["science", "mathematics"]
 description = "rssat is a Rust library that provides Rust bindings for multiple popular SAT solvers"
-repository="https://github.com/francisol/rssat.git"
-license="MIT"
+edition = "2021"
+keywords = ["sat", "minisat", "cadical", "glucose", "slover"]
+license = "MIT"
+name = "rssat"
+repository = "https://github.com/francisol/rssat.git"
+version = "0.1.2"
 
 [package.metadata.docs.rs]
 
 features = [""]
-
 
 # Whether to pass `--no-default-features` to Cargo (default: false)
 no-default-features = true
@@ -23,16 +22,19 @@ no-default-features = true
 default-target = "x86_64-unknown-linux-gnu"
 
 [dependencies]
-
+pest = "2.7.13"
+pest_derive = "2.7.13"
+thiserror = "1.0"
 [build-dependencies]
 bindgen = "0.70.1"
 cmake = "0.1"
-reqwest = { version = "0.12", features = ["blocking","rustls-tls"], default-features = false }
 flate2 = "1.0"
+reqwest = {version = "0.12", features = ["blocking", "rustls-tls"], default-features = false}
 tar = "0.4"
 [features]
-default = ["glucose","minisat","cadical"]
 cadical = []
-minisat = []
+default = ["glucose", "minisat", "cadical","dimacs"]
+dimacs = ["parser"]
+parser = []
 glucose = []
-
+minisat = []

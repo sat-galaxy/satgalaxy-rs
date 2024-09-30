@@ -27,7 +27,7 @@ use super::base::{Solver, Status};
 /// # Example
 /// ```rust
 /// use rssat::solver::{GlucoseSolver, Status,Solver};
-/// let solver = GlucoseSolver::new();
+/// let mut solver = GlucoseSolver::new();
 ///     solver.add_clause(&vec![1, 2]);
 ///     solver.add_clause(&vec![-1, -2]);
 ///     solver.add_clause(&vec![3]);

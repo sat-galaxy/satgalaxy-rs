@@ -28,7 +28,7 @@ use super::base::{Solver, Status};
 /// # Example
 /// ```rust
 /// use rssat::solver::{MinisatSolver, Status,Solver};
-/// let solver = MinisatSolver::new();
+/// let mut solver = MinisatSolver::new();
 ///     solver.add_clause(&vec![1, 2]);
 ///     solver.add_clause(&vec![-1, -2]);
 ///     solver.add_clause(&vec![3]);

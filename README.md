@@ -18,6 +18,7 @@ We thank the contributors of these excellent projects.
 - Support for adding clauses
 - Solving SAT problems and returning results
 - Access to native bindings for advanced functionality
+- Support reading formulas from files
 
 
 ## Build Requirements
@@ -66,7 +67,7 @@ For advanced usage, you can access the native bindings of each solver. This allo
 
 ## Future Work
 - Improve documentation to enhance user experience
-- Support reading formulas from files
+
 
 ## Contributing
 Issue reports and pull requests are welcome!
