@@ -33,7 +33,7 @@ To build RSsat, you need the following tools and libraries:
 
 ```toml
 [dependencies]
-rssat = "0.1.1"
+rssat = "0.1.2"
 ```
 
 ## Usage Example

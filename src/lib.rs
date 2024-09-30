@@ -1,4 +1,9 @@
 //! # rssat
+//! 
+//! [<img alt="github" src="https://img.shields.io/badge/github-francisol/rssat?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/francisol/rssat)
+//! [<img alt="crates.io" src="https://img.shields.io/crates/v/rssat.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/rssat)
+//! [<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-rssat?style=for-the-badge&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/rssat)
+//! 
 //! **rssat** is a Rust library that provides Rust bindings for multiple popular SAT solvers. Currently supported solvers include:
 //! 
 //! - [MiniSat](https://github.com/niklasso/minisat) (2.2.0)
@@ -26,16 +31,21 @@
 //! Currently, RSsat is not published on crates.io. We plan to publish it in the future. Until then, you can use it via Git repository:
 //! ```toml
 //! [dependencies]
-//! rssat = { git = "https://github.com/francisol/rssat.git" }
+//! rssat = "0.1.2"
 //! ```
 //! 
 //! ## Usage Example
 //! Here's a simple example using the CaDiCaL solver:
 //! ```rust
 //! use rssat::solver::{CaDiCaLSolver, Status,Solver};
-//! 
+//! use rssat::parser::{parse_dimacs_cnf,read_dimacs_from_file};
 //! fn main() {
 //!     let mut solver = CaDiCaLSolver::new();
+//!     let cnf_formula = parse_dimacs_cnf("c This is a comment
+//!        p cnf 3 2
+//!        1 -3 0
+//!        ",false);
+//!    // or call read_dimacs_from_file("path to file",false);
 //!     
 //!     solver.add_clause(&vec![1, 2]);
 //!     solver.add_clause(&vec![-1, -2]);
