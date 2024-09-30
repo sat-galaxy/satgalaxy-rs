@@ -13,9 +13,14 @@
 //! - Solving SAT problems and returning results
 //! - Access to native bindings for advanced functionality
 //! 
-//! ## Known Issues
+//! ## Build Requirements
+//! To build RSsat, you need the following tools and libraries:
+//!
+//!  - C++ compiler (e.g., GCC, Clang)
+//!  - CMake
+//!  - patch command
+//!  - Other standard build tools (make, etc.)
 //! 
-//! - Does not support reading formulas from files
 //! 
 //! ## Installation
 //! Currently, RSsat is not published on crates.io. We plan to publish it in the future. Until then, you can use it via Git repository:
@@ -56,6 +61,7 @@
 //! ## Future Work
 //! - Submit the package to crates.io
 //! - Improve documentation to enhance user experience
+//! - Support reading formulas from files
 //! 
 //! ## Contributing
 //! Issue reports and pull requests are welcome!
