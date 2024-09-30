@@ -1,13 +1,26 @@
 [package]
 name = "rssat"
 authors = ["Xie Zhongtao"]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 keywords=["sat","minisat","cadical","glucose","slover"]
 categories = ["science", "mathematics"]
 description = "rssat is a Rust library that provides Rust bindings for multiple popular SAT solvers"
 repository="https://github.com/francisol/rssat.git"
 license="MIT"
+
+[package.metadata.docs.rs]
+
+features = [""]
+
+
+# Whether to pass `--no-default-features` to Cargo (default: false)
+no-default-features = true
+
+# Target to test build on, used as the default landing page (default: "x86_64-unknown-linux-gnu")
+#
+# Any target supported by rustup can be used.
+default-target = "x86_64-unknown-linux-gnu"
 
 [dependencies]
 
@@ -22,3 +35,4 @@ default = ["glucose","minisat","cadical"]
 cadical = []
 minisat = []
 glucose = []
+
