@@ -1,7 +1,13 @@
 [package]
 name = "rssat"
+authors = ["Xie Zhongtao"]
 version = "0.1.0"
 edition = "2021"
+keywords=["sat","minisat","cadical","glucose","binding","slover","cnf"]
+categories = ["science", "mathematics"]
+description = "rssat is a Rust library that provides Rust bindings for multiple popular SAT solvers"
+repository="https://github.com/francisol/rssat.git"
+license="MIT"
 
 [dependencies]
 
