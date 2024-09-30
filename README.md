@@ -1,4 +1,10 @@
 # rssat
+
+
+[<img alt="github" src="https://img.shields.io/badge/github-francisol/rssat?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/francisol/rssat)
+[<img alt="crates.io" src="https://img.shields.io/crates/v/rssat.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/rssat)
+[<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-rssat?style=for-the-badge&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/rssat)
+
 **rssat** is a Rust library that provides Rust bindings for multiple popular SAT solvers. Currently supported solvers include:
 
 - [MiniSat](https://github.com/niklasso/minisat) (2.2.0)
@@ -23,10 +29,10 @@ To build RSsat, you need the following tools and libraries:
 - Other standard build tools (make, etc.)
 
 ## Installation
-Currently, RSsat is not published on crates.io. We plan to publish it in the future. Until then, you can use it via Git repository:
+
 ```toml
 [dependencies]
-rssat = { git = "https://github.com/francisol/rssat.git" }
+rssat = "0.1.1"
 ```
 
 ## Usage Example
@@ -59,7 +65,6 @@ fn main() {
 For advanced usage, you can access the native bindings of each solver. This allows you to use solver-specific features that are not part of the unified interface. 
 
 ## Future Work
-- Submit the package to crates.io
 - Improve documentation to enhance user experience
 - Support reading formulas from files
 
