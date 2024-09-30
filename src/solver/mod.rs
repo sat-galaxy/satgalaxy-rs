@@ -4,7 +4,7 @@ pub mod cadical;
 #[cfg(feature = "cadical")]
 pub use cadical::CaDiCaLSolver;
 #[cfg(feature = "glucose")]
-pub(self) mod glucose;
+pub mod glucose;
 #[cfg(feature = "glucose")]
 pub use glucose::GlucoseSolver;
 #[cfg(feature = "minisat")]
