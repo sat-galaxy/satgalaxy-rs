@@ -7,7 +7,7 @@ keywords = ["sat", "minisat", "cadical", "glucose", "slover"]
 license = "MIT"
 name = "rssat"
 repository = "https://github.com/francisol/rssat.git"
-version = "0.1.4"
+version = "0.1.5"
 
 [package.metadata.docs.rs]
 
