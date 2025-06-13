@@ -1,7 +1,13 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 4c32148..163c971 100644
+index 4c32148..fa2de36 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.6)
++cmake_minimum_required(VERSION 3.10)
+
+ project(glucose)
+
 @@ -47,4 +47,13 @@ target_link_libraries(glucose-simp glucose)
  # PARALLEL STUFF:
  add_library(glucosep ${lib_type} ${lib_srcs} ${lib_parallel_srcs})
@@ -18,7 +24,6 @@ index 4c32148..163c971 100644
 +install(DIRECTORY simp
 +        DESTINATION include/glucose
 +        FILES_MATCHING PATTERN "*.hpp")
-\ No newline at end of file
 diff --git a/simp/StdSimpSolver.cc b/simp/StdSimpSolver.cc
 new file mode 100644
 index 0000000..1ef856a

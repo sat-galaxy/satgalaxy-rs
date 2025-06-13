@@ -5,8 +5,6 @@ use std::{env, fs};
 use flate2::read::GzDecoder;
 use tar::Archive;
 const MINISAT_URL: &str = "https://github.com/niklasso/minisat/archive/refs/heads/master.tar.gz";
-const CADICAL_URL: &str =
-    "https://github.com/arminbiere/cadical/archive/refs/tags/rel-2.0.0.tar.gz";
 const GLUCOSE_URL: &str = "https://github.com/audemard/glucose/archive/refs/tags/4.2.1.tar.gz";
 
 fn get_extract_dir(out_dir: &PathBuf) -> PathBuf {
@@ -40,8 +38,9 @@ fn download_and_extract(url: &str, name: &str) -> PathBuf {
     d
 }
 
-fn binding_cadical() {
-    let cadical_dir = download_and_extract(CADICAL_URL, "cadical");
+fn binding_cadical(version:&str) {
+    let url = format!("https://github.com/arminbiere/cadical/archive/refs/tags/rel-{}.tar.gz",version);
+    let cadical_dir = download_and_extract(&url, "cadical");
 
     let status = Command::new("sh")
         .current_dir(&cadical_dir)
@@ -159,7 +158,7 @@ fn apply_patch(dir: &PathBuf, patch_name: &str) {
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     if cfg!(feature = "cadical") {
-        binding_cadical();
+        binding_cadical("2.1.3");
     }
     if cfg!(feature = "minisat") {
         binding_minisat();

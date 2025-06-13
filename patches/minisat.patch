@@ -1,7 +1,13 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index ae4da00..b97b44c 100644
+index ae4da00..dea34d8 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
++cmake_minimum_required(VERSION 3.10)
+
+ project(minisat)
+
 @@ -42,7 +42,8 @@ set(MINISAT_LIB_SOURCES
      minisat/utils/Options.cc
      minisat/utils/System.cc
@@ -9,11 +15,11 @@ index ae4da00..b97b44c 100644
 -    minisat/simp/SimpSolver.cc)
 +    minisat/simp/SimpSolver.cc
 +    minisat/simp/StdSimpSolver.cc)
- 
+
  add_library(minisat-lib-static STATIC ${MINISAT_LIB_SOURCES})
  add_library(minisat-lib-shared SHARED ${MINISAT_LIB_SOURCES})
 @@ -80,4 +81,4 @@ install(TARGETS minisat-lib-static minisat-lib-shared minisat_core minisat_simp
- 
+
  install(DIRECTORY minisat/mtl minisat/utils minisat/core minisat/simp
          DESTINATION include/minisat
 -        FILES_MATCHING PATTERN "*.h")

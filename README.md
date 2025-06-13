@@ -9,7 +9,7 @@
 
 - [MiniSat](https://github.com/niklasso/minisat) (2.2.0)
 - [Glucose](https://github.com/audemard/glucose) (4.2.1)
-- [CaDiCaL](https://github.com/arminbiere/cadical) (2.0.0)
+- [CaDiCaL](https://github.com/arminbiere/cadical) (2.1.3)
 
 We thank the contributors of these excellent projects.
 ## Features
@@ -25,7 +25,7 @@ We thank the contributors of these excellent projects.
 To build RSsat, you need the following tools and libraries:
 
 - C++ compiler (e.g., GCC, Clang)
-- CMake
+- CMake (>3.10)
 - patch command
 - Other standard build tools (make, etc.)
 
@@ -33,7 +33,7 @@ To build RSsat, you need the following tools and libraries:
 
 ```toml
 [dependencies]
-rssat = "0.1.2"
+rssat = "0.1.5"
 ```
 
 ## Usage Example
