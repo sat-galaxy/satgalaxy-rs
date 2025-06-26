@@ -114,7 +114,7 @@ mod tests {
         let mut solver= solver::MinisatSolver::new();
         solver.add_clause(&vec![1]);
         solver.add_clause(&vec![-1]);
-        match solver.solve() {
+        match solver.solve_model() {
             Status::SATISFIABLE(vec) => {
                 assert_eq!(1,0);
             },

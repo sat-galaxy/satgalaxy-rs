@@ -38,8 +38,11 @@ fn download_and_extract(url: &str, name: &str) -> PathBuf {
     d
 }
 
-fn binding_cadical(version:&str) {
-    let url = format!("https://github.com/arminbiere/cadical/archive/refs/tags/rel-{}.tar.gz",version);
+fn binding_cadical(version: &str) {
+    let url = format!(
+        "https://github.com/arminbiere/cadical/archive/refs/tags/rel-{}.tar.gz",
+        version
+    );
     let cadical_dir = download_and_extract(&url, "cadical");
 
     let status = Command::new("sh")
@@ -86,20 +89,20 @@ fn binding_cadical(version:&str) {
         .expect("Couldn't write bindings!");
 }
 fn binding_minisat() {
-    let minisat_dir = download_and_extract(MINISAT_URL, "minisat");
+    let minisat_dir = "solver/minisat";
     let dst = cmake::build(&minisat_dir);
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
     println!("cargo:rustc-link-lib=static=minisat");
-    println!("cargo:rustc-link-lib=stdc++");
-    println!("cargo:rerun-if-changed={}", minisat_dir.display());
+    // println!("cargo:rustc-link-lib=stdc++");
+    println!("cargo:rerun-if-changed={}", minisat_dir);
 
     let bindings = bindgen::Builder::default()
         .headers([format!(
-            "{}/include/minisat/simp/StdSimpSolver.hpp",
+            "{}/include/minisat/external/minisat_port.h",
             dst.display()
         )])
-        .allowlist_function("Minisat::.*")
-        .opaque_type("std::.*")
+        .allowlist_function("minisat_.*")
+        // .opaque_type("std::.*")
         .generate()
         .expect("Unable to generate bindings");
 
