@@ -82,7 +82,7 @@ impl CaDiCaLSolver {
 }
 
 impl Solver for CaDiCaLSolver {
-     fn solve(&mut self) -> Status {
+     fn solve_model(&mut self) -> Status {
         unsafe {
            return  match self.inner.solve() {
                 10 => {

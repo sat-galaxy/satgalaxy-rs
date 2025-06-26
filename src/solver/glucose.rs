@@ -75,7 +75,7 @@ impl GlucoseSolver {
 }
 
 impl Solver for GlucoseSolver {
-    fn solve(&mut self) -> Status {
+    fn solve_model(&mut self) -> Status {
         unsafe {
             self.inner.eliminate(true);
             return if self.inner.solve1(true, false) {
