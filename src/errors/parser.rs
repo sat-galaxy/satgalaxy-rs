@@ -13,6 +13,8 @@ pub enum ParserError{
     CnfParseError(#[from] pest::error::Error<Rule>),
     #[error("Number of variables ({0}) exceeds expected maximum ({1})")]
     TooManyVariables(i32, i32),
+    #[error("Number of clauses ({0}) exceeds expected maximum ({1})")]
+    TooManyClauses(i32, i32),
     #[error("Failed to parse int: {0}")]
     ParseIntError(#[from] std::num::ParseIntError)
 }

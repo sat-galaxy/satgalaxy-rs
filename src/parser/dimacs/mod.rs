@@ -1,12 +1,11 @@
 use std::{
     cmp::max,
     fs,
-    io::{self, Read},
+    io::{self, Read}, path::Path,
 };
 
-use crate::errors::ParserError;
+use crate::{errors::ParserError, parser::AsDimacs};
 
-use super::CnfFormula;
 use pest::Parser;
 #[derive(pest_derive::Parser)]
 #[grammar = "../pest/dimacs.pest"]
@@ -58,18 +57,23 @@ struct DIMACSParser;
 /// * Parses the input string according to DIMACS CNF format rules.
 /// * In strict mode, it enforces the declared number of variables and clauses.
 /// * Constructs a `CnfFormula` with parsed clauses and variable information.
-pub fn parse_dimacs_cnf(input: &str, strict: bool) -> Result<CnfFormula, ParserError> {
-    let mut cnf = CnfFormula::new();
+pub fn parse_dimacs_cnf<D:AsDimacs>(input: &str, strict: bool,dim:&mut D) -> Result<(), ParserError> {
     let mut num_vars = 0;
-    let mut variables = -1;
+    let mut variables = 0;
     let mut clauses = 0;
+    let mut num_clauses = 0;
     let pairs = DIMACSParser::parse(Rule::file, input)?;
     for pair in pairs {
         for inner_pair in pair.into_inner() {
             match inner_pair.as_rule() {
                 Rule::cluase => {
-                    if strict && clauses > 0 && cnf.clauses.len() >= clauses {
-                        break;
+                    if strict  {
+                        if clauses > 0 && num_clauses >= clauses {
+                            return Err(ParserError::TooManyClauses(num_clauses, clauses));
+                        }
+                        if num_vars>0 && num_vars>=variables{
+                            return Err(ParserError::TooManyVariables(num_vars, variables));
+                        }
                     }
 
                     let mut clause = Vec::<i32>::new();
@@ -79,7 +83,8 @@ pub fn parse_dimacs_cnf(input: &str, strict: bool) -> Result<CnfFormula, ParserE
                         num_vars = max(abs, num_vars);
                         clause.push(lit);
                     }
-                    cnf.clauses.push(clause);
+                    num_clauses+=1;
+                    dim.add_clause(clause);
                 }
                 Rule::def => {
                     for def_rule in inner_pair.into_inner() {
@@ -101,25 +106,18 @@ pub fn parse_dimacs_cnf(input: &str, strict: bool) -> Result<CnfFormula, ParserE
             };
         }
     }
-    if strict {
-        if num_vars > variables {
-            return Err(ParserError::TooManyVariables(num_vars, variables));
-        }
-        num_vars = variables;
-    }
-    cnf.num_vars = num_vars.try_into().unwrap();
-    cnf.num_clauses = cnf.clauses.len();
-    Ok(cnf)
+    Ok(())
 }
 
 /// Reads a DIMACS CNF file from a given path or standard input and parses it into a `CnfFormula`.
-pub fn read_dimacs_from_file<P: AsRef<Path>>(
-    path: Option<P>,
+pub fn read_dimacs_from_file<P: AsRef<Path>,D:AsDimacs>(
+    path: Option<&P>,
     strict: bool,
-) -> Result<CnfFormula, ParserError> {
+    dim:&mut D
+) -> Result<(), ParserError> {
     let data = match path {
         Some(p) => {
-            fs::read_to_string(path)?
+            fs::read_to_string(p)?
         }
         None => {
             let mut buf = String::new();
@@ -127,5 +125,5 @@ pub fn read_dimacs_from_file<P: AsRef<Path>>(
             buf
         }
     };
-    parse_dimacs_cnf(&data, strict)
+    parse_dimacs_cnf(&data, strict,dim)
 }
