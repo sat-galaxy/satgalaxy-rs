@@ -1,3 +1,6 @@
 [submodule "solver"]
 	path = solver
 	url = https://github.com/francisol/SATGalaxy.git
+[submodule "satgalaxy-core"]
+	path = satgalaxy-core
+	url = https://github.com/sat-galaxy/satgalaxy-core.git
