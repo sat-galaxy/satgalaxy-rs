@@ -27,7 +27,7 @@ impl<T: SatSolver> AsDimacs for T{
     fn add_clause(&mut self, clause: Vec<i32>) {
         self.add_clause(&clause);
     }
-    fn add_comment(&mut self, comment: String) {
+    fn add_comment(&mut self, _comment: String) {
     }
 }
 
@@ -36,7 +36,7 @@ impl AsDimacs for Vec<Vec<i32>> {
         self.push(clause);
     }
 
-    fn add_comment(&mut self,comment:String) {
+    fn add_comment(&mut self,_comment:String) {
         // todo!()
     }
 }
@@ -49,7 +49,7 @@ impl AsDimacs for Problem {
         self.clauses.push(clause);
         self.num_clauses += 1;
     }
-    fn add_comment(&mut self,comment:String) {
+    fn add_comment(&mut self,_comment:String) {
         
     }
 }

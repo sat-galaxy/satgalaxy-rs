@@ -1,7 +1,8 @@
 use std::{
     cmp::max,
-    fs::{self, File},
-    io::{self, BufReader, Read, Seek, SeekFrom, Stdin}, path::Path,
+    fs::File,
+    io::{self, BufReader, Read, Seek, SeekFrom, Stdin},
+    path::Path,
 };
 use flate2::read::GzDecoder;
 use crate::{errors::ParserError, parser::AsDimacs};
