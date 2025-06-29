@@ -305,11 +305,6 @@ impl GlucoseSolver {
     pub fn new_var(&mut self) -> i32 {
         unsafe { bindings::glucose_new_var(self.inner) as i32 }
     }
-    pub fn release_var(&mut self, var: i32) {
-        unsafe {
-            bindings::glucose_release_var(self.inner, var as c_int);
-        }
-    }
 
     pub fn add_clause(&mut self, clause: &Vec<i32>) {
         unsafe {

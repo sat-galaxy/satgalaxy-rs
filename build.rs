@@ -10,7 +10,7 @@ fn binding_minisat() {
         .out_dir(out_path.join("minisat"))
         .build_target("minisat-lib-static")
         .build();
-    println!("cargo:rustc-link-search=native={}/build", dst.display());
+    println!("cargo:rustc-link-search=native={}/build/lib", dst.display());
     println!("cargo:rustc-link-lib=static=minisat");
     println!("cargo:rerun-if-changed={}", minisat_dir);
 
@@ -34,7 +34,7 @@ fn binding_glucose(version: &str) {
         .out_dir(out_path.join(format!("glucose-{}", version)))
         .build_target("glucose")
         .build();
-    println!("cargo:rustc-link-search=native={}/build", dst.display());
+    println!("cargo:rustc-link-search=native={}/build/lib", dst.display());
     println!("cargo:rustc-link-lib=static=glucose");
     println!("cargo:rerun-if-changed={}", &solver_dir);
 

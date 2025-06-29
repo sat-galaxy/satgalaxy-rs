@@ -5,6 +5,7 @@ use std::{
     path::Path,
 };
 use flate2::read::GzDecoder;
+use xz2::read::XzDecoder;
 use crate::{errors::ParserError, parser::AsDimacs};
 
 use pest::Parser;
@@ -131,6 +132,7 @@ pub fn read_dimacs_from_file<P: AsRef<Path>,D:AsDimacs>(
 enum SmartReader {
     Plain(BufReader<File>),
     Gzip(BufReader<GzDecoder<File>>),
+    Xz(BufReader<XzDecoder<File>>),
     Stdio(BufReader<io::Stdin>),
 }
 
@@ -139,19 +141,27 @@ impl SmartReader {
     pub fn open<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         let mut file = File::open(path)?;
         
-        let mut header = [0u8; 2];
+        let mut header = [0u8; 6];
         let mut temp_reader = BufReader::new(&file);
         temp_reader.read_exact(&mut header)?;
         
         file.seek(SeekFrom::Start(0))?;
 
         // Gzip file header: 0x1F 0x8B
-        if header == [0x1F, 0x8B] {
-            let decoder = GzDecoder::new(file);
-            Ok(Self::Gzip(BufReader::new(decoder)))
-        } else {
-            Ok(Self::Plain(BufReader::new(file)))
+        match header {
+            [0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00] => {
+                let decoder = XzDecoder::new(file);
+                Ok(Self::Xz(BufReader::new(decoder)))
+            },
+            [0x1F, 0x8B, ..] => {
+                let decoder = GzDecoder::new(file);
+                Ok(Self::Gzip(BufReader::new(decoder)))
+            }
+            _=>{
+                Ok(Self::Plain(BufReader::new(file)))
+            }
         }
+        
     }
 }
 
@@ -161,6 +171,7 @@ impl Read for SmartReader {
             SmartReader::Plain(r) => r.read(buf),
             SmartReader::Gzip(r) => r.read(buf),
             SmartReader::Stdio(r) => r.read(buf),
+            SmartReader::Xz(r)=>r.read(buf)
         }
     }
 
