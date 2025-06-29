@@ -1,12 +1,12 @@
 [package]
 authors = ["Xie Zhongtao"]
 categories = ["science", "mathematics"]
-description = "rssat is a Rust library that provides Rust bindings for multiple popular SAT solvers"
+description = "satgalaxy-rs is a Rust library that provides Rust bindings for multiple popular SAT solvers"
 edition = "2021"
 keywords = ["sat", "minisat", "cadical", "glucose", "slover"]
 license = "MIT"
-name = "rssat"
-repository = "https://github.com/francisol/rssat.git"
+name = "satgalaxy"
+repository = "https://github.com/sat-galaxy/satgalaxy-rs.git"
 version = "0.1.5"
 
 [package.metadata.docs.rs]
@@ -34,7 +34,7 @@ reqwest = {version = "0.12", features = ["blocking", "rustls-tls"], default-feat
 tar = "0.4"
 [features]
 cadical = []
-default = ["glucose", "minisat", "cadical","parser"]
+default = [ "minisat","parser"]
 parser = ["pest","pest_derive"]
 glucose = []
 minisat = []
