@@ -2,24 +2,25 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::{env, fs};
 
-use flate2::read::GzDecoder;
-use tar::Archive;
 
 fn binding_cadical(version: &str) {
    
 }
 fn binding_minisat() {
     let minisat_dir = "satgalaxy-core/minisat";
-    let dst = cmake::build(&minisat_dir);
-    println!("cargo:rustc-link-search=native={}/lib", dst.display());
+    let mut cfg=cmake::Config::new(minisat_dir);
+    let dst =    cfg.build_target("minisat-lib-static")
+       .build() ;
+    // let dst = cmake::build(&minisat_dir);
+    println!("cargo:rustc-link-search=native={}/build", dst.display());
     println!("cargo:rustc-link-lib=static=minisat");
-    // println!("cargo:rustc-link-lib=stdc++");
+    println!("cargo:rustc-link-lib=stdc++");
     println!("cargo:rerun-if-changed={}", minisat_dir);
 
     let bindings = bindgen::Builder::default()
         .headers([format!(
-            "{}/include/minisat/external/minisat_port.h",
-            dst.display()
+            "{}/minisat/external/minisat_port.h",
+            minisat_dir
         )])
         .allowlist_function("minisat_.*")
         // .opaque_type("std::.*")

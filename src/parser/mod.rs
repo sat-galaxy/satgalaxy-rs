@@ -13,7 +13,7 @@ pub struct Problem{
 }
 #[cfg(feature = "parser")]
 impl Problem {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self { clauses:vec![], num_vars: 0, num_clauses: 0 }
     }
 }

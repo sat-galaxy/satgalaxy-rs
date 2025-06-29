@@ -1,9 +1,9 @@
 use std::{
     cmp::max,
-    fs,
-    io::{self, Read}, path::Path,
+    fs::{self, File},
+    io::{self, BufReader, Read, Seek, SeekFrom, Stdin}, path::Path,
 };
-
+use flate2::read::GzDecoder;
 use crate::{errors::ParserError, parser::AsDimacs};
 
 use pest::Parser;
@@ -115,15 +115,58 @@ pub fn read_dimacs_from_file<P: AsRef<Path>,D:AsDimacs>(
     strict: bool,
     dim:&mut D
 ) -> Result<(), ParserError> {
-    let data = match path {
+    let mut reader = match path {
         Some(p) => {
-            fs::read_to_string(p)?
+            SmartReader::open(p)?
         }
         None => {
-            let mut buf = String::new();
-            let _ = io::stdin().read_to_string(&mut buf);
-            buf
+            io::stdin().into()
         }
     };
-    parse_dimacs_cnf(&data, strict,dim)
+    let mut buf = String::new();
+    reader.read_to_string(&mut buf)?;
+    parse_dimacs_cnf(&buf, strict,dim)
+}
+enum SmartReader {
+    Plain(BufReader<File>),
+    Gzip(BufReader<GzDecoder<File>>),
+    Stdio(BufReader<io::Stdin>),
+}
+
+impl SmartReader {
+    /// 打开文件并自动检测格式
+    pub fn open<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+        let mut file = File::open(path)?;
+        
+        let mut header = [0u8; 2];
+        let mut temp_reader = BufReader::new(&file);
+        temp_reader.read_exact(&mut header)?;
+        
+        file.seek(SeekFrom::Start(0))?;
+
+        // Gzip file header: 0x1F 0x8B
+        if header == [0x1F, 0x8B] {
+            let decoder = GzDecoder::new(file);
+            Ok(Self::Gzip(BufReader::new(decoder)))
+        } else {
+            Ok(Self::Plain(BufReader::new(file)))
+        }
+    }
+}
+
+impl Read for SmartReader {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        match self {
+            SmartReader::Plain(r) => r.read(buf),
+            SmartReader::Gzip(r) => r.read(buf),
+            SmartReader::Stdio(r) => r.read(buf),
+        }
+    }
+
+}
+
+impl From<Stdin> for SmartReader {
+    fn from(stdin: Stdin) -> Self {
+        SmartReader::Stdio(BufReader::new(stdin))
+    }
 }
