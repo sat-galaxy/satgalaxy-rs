@@ -15,8 +15,8 @@ ASCII_DIGIT+
 def      = {
     "p cnf" ~ variables ~ clauses ~ NEWLINE+
 }
-cluase = {
+clause = {
     lit+ ~ "0"
 }
 
-file = { SOI ~ def? ~ (cluase ~ NEWLINE*)* ~ EOI }
+file = { SOI ~ def? ~ (clause ~ NEWLINE*)* ~ EOI }

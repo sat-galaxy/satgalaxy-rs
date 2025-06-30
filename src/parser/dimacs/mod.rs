@@ -76,7 +76,7 @@ pub fn parse_dimacs_cnf<D: AsDimacs>(
     for pair in pairs {
         for inner_pair in pair.into_inner() {
             match inner_pair.as_rule() {
-                Rule::cluase => {
+                Rule::clause => {
                     if strict {
                         if clauses > 0 && num_clauses >= clauses {
                             return Err(ParserError::TooManyClauses(num_clauses, clauses));
@@ -164,10 +164,10 @@ impl<R: Read> SmartReader<io::Chain<Cursor<Vec<u8>>, R>> {
     pub fn new(reader: R) -> Result<Self, io::Error> {
         let mut reader = reader;
         let mut header = [0u8; 6];
+        let len=reader.read(&mut header)?;
 
-        reader.read_exact(&mut header)?;
 
-        let header_cursor = Cursor::new(header[..6].to_vec());
+        let header_cursor = Cursor::new(header[..len].to_vec());
         let chained_reader = BufReader::new(header_cursor.chain(reader));
 
         // Gzip file header: 0x1F 0x8B
@@ -180,7 +180,10 @@ impl<R: Read> SmartReader<io::Chain<Cursor<Vec<u8>>, R>> {
                 let decoder = GzDecoder::new(chained_reader);
                 Ok(Self::Gzip(decoder))
             }
-            _ => Ok(Self::Plain(chained_reader)),
+            _ => {
+                println!("Unrecognized file format.");
+                Ok(Self::Plain(chained_reader))
+            },
         }
     }
 }
