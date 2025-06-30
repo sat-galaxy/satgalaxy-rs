@@ -181,7 +181,6 @@ impl<R: Read> SmartReader<io::Chain<Cursor<Vec<u8>>, R>> {
                 Ok(Self::Gzip(decoder))
             }
             _ => {
-                println!("Unrecognized file format.");
                 Ok(Self::Plain(chained_reader))
             },
         }
