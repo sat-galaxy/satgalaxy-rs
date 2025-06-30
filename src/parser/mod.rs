@@ -1,6 +1,7 @@
 mod dimacs;
 pub  use dimacs::parse_dimacs_cnf;
 pub  use dimacs::read_dimacs_from_file;
+pub  use dimacs::read_dimacs_from_reader;
 pub(crate) use dimacs::Rule;
 
 use crate::solver::SatSolver;
