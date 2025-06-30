@@ -1,11 +1,9 @@
-
-
 use thiserror::Error;
 
 use crate::parser::Rule;
 
 #[derive(Error, Debug)]
-pub enum ParserError{
+pub enum ParserError {
     #[error("Failed to read file: {0}")]
     FileReadError(#[from] std::io::Error),
 
@@ -16,7 +14,5 @@ pub enum ParserError{
     #[error("Number of clauses ({0}) exceeds expected maximum ({1})")]
     TooManyClauses(i32, i32),
     #[error("Failed to parse int: {0}")]
-    ParseIntError(#[from] std::num::ParseIntError)
+    ParseIntError(#[from] std::num::ParseIntError),
 }
-
-

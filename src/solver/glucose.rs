@@ -56,52 +56,58 @@ pub struct GlucoseSolver {
     inner: *mut c_void,
 }
 
+impl Default for GlucoseSolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GlucoseSolver {
     pub fn set_opt_k(value: f64) {
         unsafe {
-            bindings::glucose_set_opt_K(value.into());
+            bindings::glucose_set_opt_K(value);
         }
     }
 
     pub fn set_opt_r(value: f64) {
         unsafe {
-            bindings::glucose_set_opt_R(value.into());
+            bindings::glucose_set_opt_R(value);
         }
     }
 
     pub fn set_opt_size_lbd_queue(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_size_lbd_queue(value.into());
+            bindings::glucose_set_opt_size_lbd_queue(value);
         }
     }
 
     pub fn set_opt_size_trail_queue(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_size_trail_queue(value.into());
+            bindings::glucose_set_opt_size_trail_queue(value);
         }
     }
 
     pub fn set_opt_first_reduce_db(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_first_reduce_db(value.into());
+            bindings::glucose_set_opt_first_reduce_db(value);
         }
     }
 
     pub fn set_opt_inc_reduce_db(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_inc_reduce_db(value.into());
+            bindings::glucose_set_opt_inc_reduce_db(value);
         }
     }
 
     pub fn set_opt_spec_inc_reduce_db(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_spec_inc_reduce_db(value.into());
+            bindings::glucose_set_opt_spec_inc_reduce_db(value);
         }
     }
 
     pub fn set_opt_lb_lbd_frozen_clause(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_lb_lbd_frozen_clause(value.into());
+            bindings::glucose_set_opt_lb_lbd_frozen_clause(value);
         }
     }
 
@@ -113,19 +119,19 @@ impl GlucoseSolver {
 
     pub fn set_opt_chanseok_limit(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_chanseok_limit(value.into());
+            bindings::glucose_set_opt_chanseok_limit(value);
         }
     }
 
     pub fn set_opt_lb_size_minimzing_clause(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_lb_size_minimzing_clause(value.into());
+            bindings::glucose_set_opt_lb_size_minimzing_clause(value);
         }
     }
 
     pub fn set_opt_lb_lbd_minimzing_clause(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_lb_lbd_minimzing_clause(value.into());
+            bindings::glucose_set_opt_lb_lbd_minimzing_clause(value);
         }
     }
 
@@ -143,43 +149,43 @@ impl GlucoseSolver {
 
     pub fn set_opt_var_decay(value: f64) {
         unsafe {
-            bindings::glucose_set_opt_var_decay(value.into());
+            bindings::glucose_set_opt_var_decay(value);
         }
     }
 
     pub fn set_opt_max_var_decay(value: f64) {
         unsafe {
-            bindings::glucose_set_opt_max_var_decay(value.into());
+            bindings::glucose_set_opt_max_var_decay(value);
         }
     }
 
     pub fn set_opt_clause_decay(value: f64) {
         unsafe {
-            bindings::glucose_set_opt_clause_decay(value.into());
+            bindings::glucose_set_opt_clause_decay(value);
         }
     }
 
     pub fn set_opt_random_var_freq(value: f64) {
         unsafe {
-            bindings::glucose_set_opt_random_var_freq(value.into());
+            bindings::glucose_set_opt_random_var_freq(value);
         }
     }
 
     pub fn set_opt_random_seed(value: f64) {
         unsafe {
-            bindings::glucose_set_opt_random_seed(value.into());
+            bindings::glucose_set_opt_random_seed(value);
         }
     }
 
     pub fn set_opt_ccmin_mode(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_ccmin_mode(value.into());
+            bindings::glucose_set_opt_ccmin_mode(value);
         }
     }
 
     pub fn set_opt_phase_saving(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_phase_saving(value.into());
+            bindings::glucose_set_opt_phase_saving(value);
         }
     }
 
@@ -191,7 +197,7 @@ impl GlucoseSolver {
 
     pub fn set_opt_garbage_frac(value: f64) {
         unsafe {
-            bindings::glucose_set_opt_garbage_frac(value.into());
+            bindings::glucose_set_opt_garbage_frac(value);
         }
     }
 
@@ -209,19 +215,19 @@ impl GlucoseSolver {
 
     pub fn set_opt_restart_inc(value: f64) {
         unsafe {
-            bindings::glucose_set_opt_restart_inc(value.into());
+            bindings::glucose_set_opt_restart_inc(value);
         }
     }
 
     pub fn set_opt_luby_restart_factor(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_luby_restart_factor(value.into());
+            bindings::glucose_set_opt_luby_restart_factor(value);
         }
     }
 
     pub fn set_opt_randomize_phase_on_restarts(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_randomize_phase_on_restarts(value.into());
+            bindings::glucose_set_opt_randomize_phase_on_restarts(value);
         }
     }
 
@@ -263,31 +269,31 @@ impl GlucoseSolver {
 
     pub fn set_opt_grow(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_grow(value.into());
+            bindings::glucose_set_opt_grow(value);
         }
     }
 
     pub fn set_opt_clause_lim(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_clause_lim(value.into());
+            bindings::glucose_set_opt_clause_lim(value);
         }
     }
 
     pub fn set_opt_subsumption_lim(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_subsumption_lim(value.into());
+            bindings::glucose_set_opt_subsumption_lim(value);
         }
     }
 
     pub fn set_opt_simp_garbage_frac(value: f64) {
         unsafe {
-            bindings::glucose_set_opt_simp_garbage_frac(value.into());
+            bindings::glucose_set_opt_simp_garbage_frac(value);
         }
     }
 
     pub fn set_opt_verbosity(value: i32) {
         unsafe {
-            bindings::glucose_set_opt_verbosity(value.into());
+            bindings::glucose_set_opt_verbosity(value);
         }
     }
 
@@ -306,7 +312,7 @@ impl GlucoseSolver {
         unsafe { bindings::glucose_new_var(self.inner) as i32 }
     }
 
-    pub fn add_clause(&mut self, clause: &Vec<i32>) {
+    pub fn add_clause(&mut self, clause: &[i32]) {
         unsafe {
             bindings::glucose_add_clause(
                 self.inner,
@@ -328,13 +334,13 @@ impl GlucoseSolver {
     }
     pub fn solve_assumps(&mut self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> bool {
         unsafe {
-            return bindings::glucose_solve_assumps(
+            bindings::glucose_solve_assumps(
                 self.inner,
                 assumps.as_ptr(),
                 assumps.len().try_into().unwrap(),
                 do_simp.into(),
                 turn_off_simp.into(),
-            ) == 1;
+            ) == 1
         }
     }
 
@@ -360,9 +366,7 @@ impl GlucoseSolver {
     }
 
     pub fn solve(&mut self, do_simp: bool, turn_off_simp: bool) -> bool {
-        unsafe {
-            return bindings::glucose_solve(self.inner, do_simp.into(), turn_off_simp.into()) == 1;
-        }
+        unsafe { bindings::glucose_solve(self.inner, do_simp.into(), turn_off_simp.into()) == 1 }
     }
     pub fn eliminate(&mut self, turn_off_simp: bool) {
         unsafe {
@@ -400,7 +404,7 @@ impl SatSolver for GlucoseSolver {
         }
     }
 
-    fn add_clause(&mut self, clause: &Vec<i32>) {
+    fn add_clause(&mut self, clause: &[i32]) {
         GlucoseSolver::add_clause(self, clause);
     }
 }

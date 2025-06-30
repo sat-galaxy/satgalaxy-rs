@@ -55,6 +55,12 @@ pub struct MinisatSolver {
     inner: *mut c_void,
 }
 
+impl Default for MinisatSolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MinisatSolver {
     /// The variable activity decay factor(0~1). default: 0.95
     pub fn set_opt_var_decay(decay: f64) {
@@ -190,7 +196,7 @@ impl MinisatSolver {
         }
     }
 
-    pub fn add_clause(&mut self, clause: &Vec<i32>) {
+    pub fn add_clause(&mut self, clause: &[i32]) {
         unsafe {
             bindings::minisat_add_clause(
                 self.inner,
@@ -212,13 +218,13 @@ impl MinisatSolver {
     }
     pub fn solve_assumps(&mut self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> bool {
         unsafe {
-            return bindings::minisat_solve_assumps(
+             bindings::minisat_solve_assumps(
                 self.inner,
                 assumps.as_ptr(),
                 assumps.len().try_into().unwrap(),
                 do_simp.into(),
                 turn_off_simp.into(),
-            ) == 1;
+            ) == 1
         }
     }
 
@@ -245,7 +251,7 @@ impl MinisatSolver {
 
     pub fn solve(&mut self, do_simp: bool, turn_off_simp: bool) -> bool {
         unsafe {
-            return bindings::minisat_solve(self.inner, do_simp.into(), turn_off_simp.into()) == 1;
+            bindings::minisat_solve(self.inner, do_simp.into(), turn_off_simp.into()) == 1
         }
     }
     pub fn eliminate(&mut self, turn_off_simp: bool) {
@@ -284,7 +290,7 @@ impl SatSolver for MinisatSolver {
         }
     }
 
-    fn add_clause(&mut self, clause: &Vec<i32>) {
+    fn add_clause(&mut self, clause: &[i32]) {
         MinisatSolver::add_clause(self, clause);
     }
 }

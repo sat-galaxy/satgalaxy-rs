@@ -111,10 +111,10 @@ mod tests {
     #[cfg(feature = "minisat")]
     fn minisat() {
         let mut solver = solver::MinisatSolver::new();
-        solver.add_clause(&vec![1]);
-        solver.add_clause(&vec![-1]);
+        solver.add_clause(&[1]);
+        solver.add_clause(&[-1]);
         match solver.solve_model() {
-            Status::Satisfiable(vec) => {
+            Status::Satisfiable(_vec) => {
                 assert_eq!(1, 0);
             }
             Status::Unsatisfiable => {
@@ -129,10 +129,10 @@ mod tests {
     #[cfg(feature = "glucose")]
     fn glucose() {
         let mut solver = solver::glucose::GlucoseSolver::new();
-        solver.add_clause(&vec![1]);
-        solver.add_clause(&vec![-1]);
+        solver.add_clause(&[1]);
+        solver.add_clause(&[-1]);
         match solver.solve_model() {
-            Status::Satisfiable(vec) => {
+            Status::Satisfiable(_vec) => {
                 assert_eq!(1, 0);
             }
             Status::Unsatisfiable => {
@@ -144,7 +144,7 @@ mod tests {
         }
     }
     #[test]
-    #[cfg(feature = "dimacs")]
+    #[cfg(feature = "parser")]
     fn dimacs() {
         use parser::parse_dimacs_cnf;
 
@@ -152,16 +152,16 @@ mod tests {
         p cnf 3 2
         1 -3 0
         ";
-        match parse_dimacs_cnf(dimacs_content, false) {
-            Ok(cnf) => {
-                assert_eq!(cnf.num_vars, 3);
-                assert_eq!(cnf.num_clauses, 1);
+        let mut cnf=Vec::new();
+        match parse_dimacs_cnf(dimacs_content, false,&mut cnf) {
+            Ok(_) => {
+                assert_eq!(cnf.len(), 1);
             }
-            Err(e) => assert_eq!("result", "should be ok"),
+            Err(_e) => assert_eq!("result", "should be ok"),
         }
     }
     #[test]
-    #[cfg(feature = "dimacs")]
+    #[cfg(feature = "parser")]
     fn dimacs_strict() {
         use parser::parse_dimacs_cnf;
 
@@ -169,11 +169,12 @@ mod tests {
         p cnf 2 2
         1 -3 0
         ";
-        match parse_dimacs_cnf(dimacs_content, true) {
-            Ok(cnf) => {
+        let mut cnf=Vec::new();
+        match parse_dimacs_cnf(dimacs_content, true,&mut cnf) {
+            Ok(_) => {
                 assert_eq!("result", "should be error")
             }
-            Err(e) => assert!(true),
+            Err(_e) => assert!(true),
         }
     }
 }

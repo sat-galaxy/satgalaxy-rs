@@ -19,7 +19,6 @@
 
 include!(concat!(env!("OUT_DIR"), "/cadical_bindings.rs"));
 
-
 use super::base::{Solver, Status};
 
 /// `CaDiCaLSolver` is a wrapper for the [CaDiCaL](https://github.com/arminbiere/cadical) Solver .
@@ -32,7 +31,7 @@ use super::base::{Solver, Status};
 ///     solver.add_clause(&vec![1, 2]);
 ///     solver.add_clause(&vec![-1, -2]);
 ///     solver.add_clause(&vec![3]);
-/// 
+///
 /// match solver.solve() {
 ///    Status::SATISFIABLE(vec) => {
 ///         println!("Satisfiable solution: {:?}", vec);
@@ -51,53 +50,47 @@ use super::base::{Solver, Status};
 ///  [dependencies]
 ///  rssat = { version = "x.y.z", features = ["cadical"] }
 pub struct CaDiCaLSolver {
-    inner:  CaDiCaL_Solver,
+    inner: CaDiCaL_Solver,
 }
 
 impl CaDiCaLSolver {
     pub fn new() -> Self {
         unsafe {
             CaDiCaLSolver {
-                inner:  CaDiCaL_Solver::new(),
+                inner: CaDiCaL_Solver::new(),
             }
         }
     }
 
     pub fn val(&mut self, lit: i32) -> i32 {
-        unsafe {
-          self.inner.val(lit)
-        }
+        unsafe { self.inner.val(lit) }
     }
-    pub  fn model(&mut self)->Vec<i32> {
-        let mut m =Vec::<i32>::new();
+    pub fn model(&mut self) -> Vec<i32> {
+        let mut m = Vec::<i32>::new();
         unsafe {
-        for i in 1..self.inner.vars()+1 {
-            if self.val(i)>0 {
-                m.push(i);
+            for i in 1..self.inner.vars() + 1 {
+                if self.val(i) > 0 {
+                    m.push(i);
+                }
             }
         }
-    }
         m
     }
 }
 
 impl Solver for CaDiCaLSolver {
-     fn solve_model(&mut self) -> Status {
+    fn solve_model(&mut self) -> Status {
         unsafe {
-           return  match self.inner.solve() {
-                10 => {
-                    Status::SATISFIABLE(self.model())
-                },
-                20 =>{
-                    Status::UNSATISFIABLE
-                },
+            return match self.inner.solve() {
+                10 => Status::SATISFIABLE(self.model()),
+                20 => Status::UNSATISFIABLE,
                 _ => Status::UNKNOWN,
-            }
+            };
         }
     }
-     fn add_clause(&mut self, clause: &Vec<i32>) {
+    fn add_clause(&mut self, clause: &Vec<i32>) {
         unsafe {
-            self.inner.clause6(clause.as_ptr(),clause.len());
+            self.inner.clause6(clause.as_ptr(), clause.len());
         }
     }
 }

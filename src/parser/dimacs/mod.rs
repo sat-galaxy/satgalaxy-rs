@@ -1,11 +1,15 @@
 use crate::{errors::ParserError, parser::AsDimacs};
+#[cfg(feature = "compression")]
 use flate2::read::GzDecoder;
+#[cfg(feature = "compression")]
+use std::io::Cursor;
 use std::{
     cmp::max,
     fs::File,
-    io::{self, BufReader, Cursor, Read},
+    io::{self, BufReader, Read},
     path::Path,
 };
+#[cfg(feature = "compression")]
 use xz2::read::XzDecoder;
 
 use pest::Parser;
@@ -138,7 +142,9 @@ pub fn read_dimacs_from_reader<R: Read, D: AsDimacs>(
 
 enum SmartReader<R: Read> {
     Plain(BufReader<R>),
+    #[cfg(feature = "compression")]
     Gzip(GzDecoder<BufReader<R>>),
+    #[cfg(feature = "compression")]
     Xz(XzDecoder<BufReader<R>>),
 }
 
@@ -146,12 +152,14 @@ impl<R: Read> Read for SmartReader<R> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         match self {
             SmartReader::Plain(r) => r.read(buf),
+            #[cfg(feature = "compression")]
             SmartReader::Gzip(r) => r.read(buf),
+            #[cfg(feature = "compression")]
             SmartReader::Xz(r) => r.read(buf),
         }
     }
 }
-
+#[cfg(feature = "compression")]
 impl<R: Read> SmartReader<io::Chain<Cursor<Vec<u8>>, R>> {
     pub fn new(reader: R) -> Result<Self, io::Error> {
         let mut reader = reader;
@@ -174,5 +182,11 @@ impl<R: Read> SmartReader<io::Chain<Cursor<Vec<u8>>, R>> {
             }
             _ => Ok(Self::Plain(chained_reader)),
         }
+    }
+}
+#[cfg(not(feature = "compression"))]
+impl<R: Read> SmartReader<R> {
+    pub fn new(reader: R) -> Result<Self, io::Error> {
+        Ok(SmartReader::Plain(BufReader::new(reader)))
     }
 }

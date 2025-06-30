@@ -1,77 +1,207 @@
-# rssat
+# satgalaxy-rs 🌠
+
+**Rust FFI bindings for `satgalaxy-core` – bringing high-performance SAT solving to Rust!**
+
+<!-- [![crates.io](https://img.shields.io/crates/v/satgalaxy)](https://crates.io/crates/satgalaxy)
+[![docs.rs](https://docs.rs/satgalaxy/badge.svg)](https://docs.rs/satgalaxy) -->
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen)](https://github.com/your-username/satgalaxy-rs/actions) 
+---
+### Platform & Build Compatibility
+
+![Linux](https://img.shields.io/badge/OS-Linux-informational?logo=linux&logoColor=white)
+![macOS](https://img.shields.io/badge/OS-macOS-informational?logo=apple&logoColor=white)
+![Windows](https://img.shields.io/badge/OS-Windows-informational?logo=windows&logoColor=white)
+![Build System: CMake](https://img.shields.io/badge/Build%20System-CMake-blue?logo=cmake&logoColor=white)
+
+---
+## 🚧 Under Development
+
+**Please note**: `satgalaxy-rs` **is currently under active development and has not yet been published to** `crates.io`. You can use it by cloning the repository and referencing it as a Git dependency in your `Cargo.toml`. Your contributions are welcome as we work towards a stable release!
+
+---
+
+## 🌟 Overview
+
+`satgalaxy-rs` is a Rust Foreign Function Interface (FFI) library that provides safe and idiomatic Rust bindings to the  `satgalaxy-core` C library. This means you can now leverage the power of high-performance SAT solvers like Minisat and Glucose directly from your Rust applications, without worrying about low-level C interoperability details.
+
+By using `satgalaxy-rs`, you get:
+
+- **Access to Battle-Tested Solvers**: Benefit from the speed and robustness of Minisat and Glucose, widely used in research and industry.
+- **Safe Rust API**: Interact with the C solvers through a Rust-idiomatic and memory-safe interface.
+- **Cross-Platform Compatibility**: Inherit the multi-operating system support provided by satgalaxy-core (Linux, macOS, Windows).
+- **Simplified Integration**: No need to manually compile C code; satgalaxy-rs handles the satgalaxy-core dependency during its build process.
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+To use `satgalaxy-rs`, you'll need:
+
+- **Rust Toolchain**: Install Rust via rustup (https://rustup.rs/).
+
+- **CMake**: `satgalaxy-core` uses CMake for its build system, so ensure it's installed on your system.
+
+- **C/C++ Compiler**: A C/C++ compiler (like GCC, Clang, MSVC) compatible with your system is required to compile satgalaxy-core.
+
+### Installation
+
+Add `satgalaxy-rs` to your Cargo.toml dependencies:
+```toml
+[dependencies]
+satgalaxy = { git="https://github.com/sat-galaxy/satgalaxy-rs.git"}
+```
+### Basic Usage
+
+Here's a quick example demonstrating how to solve a simple SAT problem using `satgalaxy-rs` with the Minisat backend:
+```rust
+use satgalaxy::{MinisatSolver, Status，SatSolver};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create a new Minisat solver instance
+    let mut solver = MinisatSolver::new()?;
 
 
-[<img alt="github" src="https://img.shields.io/badge/github-francisol/rssat?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/francisol/rssat)
-[<img alt="crates.io" src="https://img.shields.io/crates/v/rssat.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/rssat)
-[<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-rssat?style=for-the-badge&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/rssat)
+    // Add clauses. A clause is a disjunction of literals.
+    // Example: (var1 OR NOT var2)
+    solver.add_clause(&[var1, -var2])?;
 
-**rssat** is a Rust library that provides Rust bindings for multiple popular SAT solvers. Currently supported solvers include:
+    // Example: (var2 OR var3)
+    solver.add_clause(&[var2, var3])?;
 
-- [MiniSat](https://github.com/niklasso/minisat) (2.2.0)
-- [Glucose](https://github.com/audemard/glucose) (4.2.1)
-- [CaDiCaL](https://github.com/arminbiere/cadical) (2.1.3)
+    // Solve the SAT problem
+    println!("Attempting to solve...");
+    match solver.solve_model(){ // Pass an empty slice for assumptions
+        Status::Satisfiable(model) => {
+            println!("SATISFIABLE! 🎉");
+            // Retrieve and print the model (variable assignments)
+            println!("Model: {:?} ",model);
+        },
+        Status::Unsatisfiable => {
+            println!("UNSATISFIABLE! 😞");
+        },
+        Status::Unknown => {
+            println!("UNKNOWN result. 🤷");
+        },
+    }
 
-We thank the contributors of these excellent projects.
-## Features
+    Ok(())
+}
+```
+### Reading DIMACS CNF Files (with `parser` feature)
+The `parser` feature provides functionality to read DIMACS CNF (Conjunctive Normal Form) files, a common format for SAT instances. It leverages the AsDimacs trait to allow parsing directly into a solver or any other structure that implements this trait.
 
-- Unified Rust interface for different SAT solvers
-- Support for adding clauses
-- Solving SAT problems and returning results
-- Access to native bindings for advanced functionality
-- Support reading formulas from files
+First, ensure you enable the parser feature in your Cargo.toml:
+```toml
+satgalaxy = { git="https://github.com/sat-galaxy/satgalaxy-rs.git", features = [
+    "parser",
+    "compression",
+] }
+```
+Then, you can use read_dimacs_from_reader or parse_dimacs_cnf (if you have the content as a string) to load a problem:
+```rust
+use satgalaxy::MinisatSolver;
+use satgalaxy::parser::{parse_dimacs_cnf, read_dimacs_from_reader, AsDimacs};
 
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Example 1: Parsing from a string literal
+    let dimacs_content = "c This is a comment about the problem
+p cnf 3 2
+1 -3 0
+2 3 0
+";
 
-## Build Requirements
-To build RSsat, you need the following tools and libraries:
+    let mut solver = MinisatSolver::new()?;
+    // `parse_dimacs_cnf` takes a mutable reference to an `AsDimacs` implementor.
+    parse_dimacs_cnf(dimacs_content, false, &mut solver)?;
 
-- C++ compiler (e.g., GCC, Clang)
-- CMake (>3.10)
-- patch command
-- Other standard build tools (make, etc.)
+    println!("Solving problem parsed from string:");
+    match solver.solve_model(){ // Pass an empty slice for assumptions
+            Status::Satisfiable(model) => {
+                println!("SATISFIABLE! 🎉");
+                // Retrieve and print the model (variable assignments)
+                println!("Model: {:?} ",model);
+            },
+            Status::Unsatisfiable => {
+                println!("UNSATISFIABLE! 😞");
+            },
+            Status::Unknown => {
+                println!("UNKNOWN result. 🤷");
+            },
+        }
 
-## Installation
+    // Example 2: Reading from a reader (e.g., a file, or in this case, an in-memory buffer)
+    let mut file = File::open("path/to/dimacs_file.cnf").unwrap();
+    let mut solver = MinisatSolver::new()?;
+
+    // `read_dimacs_from_reader` also takes a mutable reference to an `AsDimacs` implementor.
+    read_dimacs_from_reader(&mut file, &mut solver)?;
+
+    println!("\nSolving problem read from reader:");
+    match solver.solve_model(){ // Pass an empty slice for assumptions
+        Status::Satisfiable(model) => {
+            println!("SATISFIABLE! 🎉");
+            // Retrieve and print the model (variable assignments)
+            println!("Model: {:?} ",model);
+        },
+        Status::Unsatisfiable => {
+            println!("UNSATISFIABLE! 😞");
+        },
+        Status::Unknown => {
+            println!("UNKNOWN result. 🤷");
+        },
+    }
+    Ok(())
+}
+```
+The `AsDimacs` trait is key to this parsing flexibility:
+```rust
+pub trait AsDimacs {
+    /// Adds a clause to the underlying structure.
+    fn add_clause(&mut self, clause: Vec<i32>);
+    /// Adds a comment line. Implementations can choose to store or ignore comments.
+    fn add_comment(&mut self, comment: String);
+}
+```
+Currently, `AsDimacs` is implemented for:
+
+- Any type that implements `SatSolver` (like MinisatSolver and GlucoseSolver), allowing you to directly load a DIMACS CNF into a solver.
+
+- `Vec<Vec<i32>>`, which simply collects the clauses into a standard Rust vector.
+- `Problem` (defined in `src/parser/mod.rs`), which is a high-level representation of a SAT problem.
+
+## 🧩 Features
+
+satgalaxy-rs leverages Cargo features to allow you to customize which SAT solvers and functionalities are compiled with your project. This helps keep your binary size down and only includes what you need.
+
+You can enable features in your Cargo.toml:
 
 ```toml
 [dependencies]
-rssat = "0.1.5"
+satgalaxy = { git="https://github.com/sat-galaxy/satgalaxy-rs.git", features = [
+    "minisat",
+    "parser",
+    "compression",
+    "glucose"
+] }
 ```
+Here's a breakdown of the available features:
 
-## Usage Example
-Here's a simple example using the CaDiCaL solver:
-```rust
-use rssat::solver::{CaDiCaLSolver, Status,Solver};
+ - `default`:
+       Includes the `minisat`, `parser`, and `glucose` features by default. If you just add `satgalaxy-rs` without specifying features, these will be enabled.
+-  `minisat`:
+  Enables the Minisat SAT solver backend.
+- `glucose`:
+        Enables the Glucose SAT solver backend.
+- `parser`:
+        Enables utilities for parsing standard SAT problem file formats (e.g., DIMACS CNF). This feature depends on the pest and pest_derive crates.
+- `compression`:
+        Adds support for reading compressed SAT problem files. This feature depends on the `flate2` and `xz2` crates for gzip and xz compression.
 
-fn main() {
-    let mut solver = CaDiCaLSolver::new();
-    
-    solver.add_clause(&vec![1, 2]);
-    solver.add_clause(&vec![-1, -2]);
-    solver.add_clause(&vec![3]);
-    
-    
-    match solver.solve() {
-        Status::SATISFIABLE(vec) => {
-            println!("Satisfiable solution: {:?}", vec);
-        },
-        Status::UNSATISFIABLE => {
-            println!("Unsatisfiable");
-        },
-        Status::UNKNOWN => {
-            println!("Unknown");
-        },
-    }
-}
-```
-## Native Bindings
-For advanced usage, you can access the native bindings of each solver. This allows you to use solver-specific features that are not part of the unified interface. 
+## 📜 License
 
-## Future Work
-- Improve documentation to enhance user experience
+This project is distributed under the MIT License.
 
+## 📧 Contact
 
-## Contributing
-Issue reports and pull requests are welcome!
-## License
-MIT License
-
-
+If you have any questions, suggestions, or just want to chat about SAT solvers, feel free to open an Issue or reach out. We'd love to hear from you!

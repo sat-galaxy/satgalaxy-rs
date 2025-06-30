@@ -9,7 +9,7 @@ pub use glucose::GlucoseSolver;
 #[cfg(feature = "minisat")]
 pub mod minisat;
 #[cfg(feature = "minisat")]
-pub  use  minisat::MinisatSolver;
+pub use minisat::MinisatSolver;
 
 #[macro_export]
 macro_rules! create_solver {
@@ -21,8 +21,10 @@ macro_rules! create_solver {
     };
 }
 
-pub enum   RawStatus {
-    Satisfiable,Unsatisfiable,Unknown
+pub enum RawStatus {
+    Satisfiable,
+    Unsatisfiable,
+    Unknown,
 }
 
 impl Default for RawStatus {
@@ -31,7 +33,9 @@ impl Default for RawStatus {
     }
 }
 pub enum Status {
-    Satisfiable(Vec<i32>),Unsatisfiable, Unknown
+    Satisfiable(Vec<i32>),
+    Unsatisfiable,
+    Unknown,
 }
 
 impl Default for Status {
@@ -41,7 +45,6 @@ impl Default for Status {
 }
 
 pub trait SatSolver {
-
-    fn add_clause(& mut self, clause:&Vec<i32>);
-    fn solve_model(& mut self)->Status;
+    fn add_clause(&mut self, clause: &[i32]);
+    fn solve_model(&mut self) -> Status;
 }
