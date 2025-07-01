@@ -3,14 +3,14 @@
 //! This module is enabled when the `minisat` feature is activated.
 //!
 //! # Overview
-//! The `MinisatSolver` struct acts as a wrapper for the [MiniSat](https://github.com/niklasso/minisat) SimpSolver, allowing users to
+//! The `MinisatSolver` struct acts as a wrapper for the [MiniSat](https://github.com/niklasso/minisat), allowing users to
 //! leverage its functionality for solving SAT problems.
 //!
 //! # Usage
 //! To use the `minisat` module, ensure the `minisat` feature is enabled in your `Cargo.toml`:
 //! ```toml
 //! [dependencies]
-//! rssat = { version = "x.y.z", features = ["minisat"] }
+//! satgalaxy = { version = "x.y.z", features = ["minisat"] }
 //! ```
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
@@ -28,20 +28,20 @@ use std::ffi::{c_int, c_void};
 /// This struct is only available when the `minisat` feature is enabled.
 /// # Example
 /// ```rust
-/// use rssat::solver::{MinisatSolver, Status,Solver};
-/// let mut solver = MinisatSolver::new();
+/// use satgalaxy::solver::{MinisatSolver, Status,Solver};
+/// let solver = MinisatSolver::new();
 ///     solver.add_clause(&vec![1, 2]);
 ///     solver.add_clause(&vec![-1, -2]);
 ///     solver.add_clause(&vec![3]);
 ///
-/// match solver.solve() {
-///    Status::SATISFIABLE(vec) => {
+/// match solver.solve_model() {
+///    Status::Satisfiable(vec) => {
 ///         println!("Satisfiable solution: {:?}", vec);
 ///     },
-///     Status::UNSATISFIABLE => {
+///     Status::Unsatisfiable => {
 ///         println!("Unsatisfiable");
 ///     },
-///     Status::UNKNOWN => {
+///     Status::Unknown => {
 ///         println!("Unknown");
 ///     },
 /// }
@@ -50,10 +50,11 @@ use std::ffi::{c_int, c_void};
 ///  To use the `MinisatSolver`, ensure the `minisat` feature is enabled in your `Cargo.toml`:
 ///  ```toml
 ///  [dependencies]
-///  rssat = { version = "x.y.z", features = ["minisat"] }
-pub struct MinisatSolver {
-    inner: *mut c_void,
-}
+///  satgalaxy = { version = "x.y.z", features = ["minisat"] }
+/// 
+pub struct MinisatSolver(*const c_void);
+unsafe impl Sync for MinisatSolver {}
+unsafe impl Send for MinisatSolver {}
 
 impl Default for MinisatSolver {
     fn default() -> Self {
@@ -179,47 +180,47 @@ impl MinisatSolver {
 
     pub fn new() -> Self {
         unsafe {
-            MinisatSolver {
-                inner: bindings::minisat_new_solver(),
-            }
+            MinisatSolver(
+                bindings::minisat_new_solver()
+            )
         }
     }
-    pub fn vars(&mut self) -> i32 {
-        unsafe { bindings::minisat_nvars(self.inner) }
+    pub fn vars(& self) -> i32 {
+        unsafe { bindings::minisat_nvars(self.0) }
     }
-    pub fn new_var(&mut self) -> i32 {
-        unsafe { bindings::minisat_new_var(self.inner) as i32 }
+    pub fn new_var(& self) -> i32 {
+        unsafe { bindings::minisat_new_var(self.0) as i32 }
     }
-    pub fn release_var(&mut self, var: i32) {
+    pub fn release_var(& self, var: i32) {
         unsafe {
-            bindings::minisat_release_var(self.inner, var as c_int);
+            bindings::minisat_release_var(self.0, var as c_int);
         }
     }
 
-    pub fn add_clause(&mut self, clause: &[i32]) {
+    pub fn add_clause(& self, clause: &[i32]) {
         unsafe {
             bindings::minisat_add_clause(
-                self.inner,
+                self.0,
                 clause.as_ptr(),
                 clause.len().try_into().unwrap(),
             );
         }
     }
-    pub fn add_empty_clause(&mut self) {
+    pub fn add_empty_clause(& self) {
         unsafe {
-            bindings::minisat_add_empty_clause(self.inner);
+            bindings::minisat_add_empty_clause(self.0);
         }
     }
-    pub fn value(&mut self, var: i32) -> bool {
-        unsafe { bindings::minisat_value(self.inner, var as c_int) != 0 }
+    pub fn value(& self, var: i32) -> bool {
+        unsafe { bindings::minisat_value(self.0, var as c_int) != 0 }
     }
-    pub fn model_value(&mut self, var: i32) -> bool {
-        unsafe { bindings::minisat_model_value(self.inner, var as c_int) != 0 }
+    pub fn model_value(& self, var: i32) -> bool {
+        unsafe { bindings::minisat_model_value(self.0, var as c_int) != 0 }
     }
-    pub fn solve_assumps(&mut self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> bool {
+    pub fn solve_assumps(& self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> bool {
         unsafe {
              bindings::minisat_solve_assumps(
-                self.inner,
+                self.0,
                 assumps.as_ptr(),
                 assumps.len().try_into().unwrap(),
                 do_simp.into(),
@@ -229,14 +230,14 @@ impl MinisatSolver {
     }
 
     pub fn solve_limited(
-        &mut self,
+        & self,
         assumps: &[i32],
         do_simp: bool,
         turn_off_simp: bool,
     ) -> RawStatus {
         unsafe {
             match bindings::minisat_solve_limited(
-                self.inner,
+                self.0,
                 assumps.as_ptr(),
                 assumps.len().try_into().unwrap(),
                 do_simp.into(),
@@ -249,31 +250,31 @@ impl MinisatSolver {
         }
     }
 
-    pub fn solve(&mut self, do_simp: bool, turn_off_simp: bool) -> bool {
+    pub fn solve(& self, do_simp: bool, turn_off_simp: bool) -> bool {
         unsafe {
-            bindings::minisat_solve(self.inner, do_simp.into(), turn_off_simp.into()) == 1
+            bindings::minisat_solve(self.0, do_simp.into(), turn_off_simp.into()) == 1
         }
     }
-    pub fn eliminate(&mut self, turn_off_simp: bool) {
+    pub fn eliminate(& self, turn_off_simp: bool) {
         unsafe {
-            bindings::minisat_eliminate(self.inner, turn_off_simp.into());
+            bindings::minisat_eliminate(self.0, turn_off_simp.into());
         }
     }
-    pub fn assigns(&mut self) -> usize {
-        unsafe { bindings::minisat_nassigns(self.inner) as usize }
+    pub fn assigns(& self) -> usize {
+        unsafe { bindings::minisat_nassigns(self.0) as usize }
     }
-    pub fn clauses(&mut self) -> usize {
-        unsafe { bindings::minisat_nclauses(self.inner) as usize }
+    pub fn clauses(& self) -> usize {
+        unsafe { bindings::minisat_nclauses(self.0) as usize }
     }
-    pub fn learnts(&mut self) -> usize {
-        unsafe { bindings::minisat_nlearnts(self.inner) as usize }
-    }
-
-    pub fn okay(&mut self) -> bool {
-        unsafe { bindings::minisat_okay(self.inner) == 1 }
+    pub fn learnts(& self) -> usize {
+        unsafe { bindings::minisat_nlearnts(self.0) as usize }
     }
 
-    pub fn model(&mut self) -> Vec<i32> {
+    pub fn okay(& self) -> bool {
+        unsafe { bindings::minisat_okay(self.0) == 1 }
+    }
+
+    pub fn model(& self) -> Vec<i32> {
         (1..self.vars() + 1)
             .filter(|lit| self.model_value(*lit))
             .collect()
@@ -281,7 +282,7 @@ impl MinisatSolver {
 }
 
 impl SatSolver for MinisatSolver {
-    fn solve_model(&mut self) -> Status {
+    fn solve_model(& self) -> Status {
         self.eliminate(true);
         match self.solve_limited(&[], true, false) {
             RawStatus::Satisfiable => Status::Satisfiable(self.model()),
@@ -290,14 +291,14 @@ impl SatSolver for MinisatSolver {
         }
     }
 
-    fn add_clause(&mut self, clause: &[i32]) {
+    fn add_clause(&self, clause: &[i32]) {
         MinisatSolver::add_clause(self, clause);
     }
 }
 impl Drop for MinisatSolver {
-    fn drop(&mut self) {
+    fn drop(& mut self) {
         unsafe {
-            bindings::minisat_destroy(self.inner);
+            bindings::minisat_destroy(self.0);
         }
     }
 }

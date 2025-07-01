@@ -45,6 +45,6 @@ impl Default for Status {
 }
 
 pub trait SatSolver {
-    fn add_clause(&mut self, clause: &[i32]);
-    fn solve_model(&mut self) -> Status;
+    fn add_clause(& self, clause: &[i32]);
+    fn solve_model(& self) -> Status;
 }

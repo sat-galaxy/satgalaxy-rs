@@ -2,8 +2,8 @@
 
 **Rust FFI bindings for `satgalaxy-core` – bringing high-performance SAT solving to Rust!**
 
-<!-- [![crates.io](https://img.shields.io/crates/v/satgalaxy)](https://crates.io/crates/satgalaxy)
-[![docs.rs](https://docs.rs/satgalaxy/badge.svg)](https://docs.rs/satgalaxy) -->
+[![crates.io](https://img.shields.io/crates/v/satgalaxy)](https://crates.io/crates/satgalaxy)
+[![docs.rs](https://docs.rs/satgalaxy/badge.svg)](https://docs.rs/satgalaxy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen)](https://github.com/your-username/satgalaxy-rs/actions) 
 ---
@@ -17,7 +17,7 @@
 ---
 ## 🚧 Under Development
 
-**Please note**: `satgalaxy-rs` **is currently under active development and has not yet been published to** `crates.io`. You can use it by cloning the repository and referencing it as a Git dependency in your `Cargo.toml`. Your contributions are welcome as we work towards a stable release!
+**Please note**: `satgalaxy-rs` **is currently under active development.
 
 ---
 
@@ -49,7 +49,7 @@ To use `satgalaxy-rs`, you'll need:
 Add `satgalaxy-rs` to your Cargo.toml dependencies:
 ```toml
 [dependencies]
-satgalaxy = { git="https://github.com/sat-galaxy/satgalaxy-rs.git"}
+satgalaxy = { version = "0.1.0", features = ["minisat"] }
 ```
 ### Basic Usage
 

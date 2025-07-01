@@ -10,7 +10,7 @@
 //! To use the `cadical` module, ensure the `cadical` feature is enabled in your `Cargo.toml`:
 //! ```toml
 //! [dependencies]
-//! rssat = { version = "x.y.z", features = ["cadical"] }
+//! satgalaxy = { version = "x.y.z", features = ["cadical"] }
 //! ```
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
@@ -26,7 +26,7 @@ use super::base::{Solver, Status};
 /// This struct is only available when the `cadical` feature is enabled.
 /// # Example
 /// ```rust
-/// use rssat::solver::{CaDiCaLSolver, Status,Solver};
+/// use satgalaxy::solver::{CaDiCaLSolver, Status,Solver};
 /// let mut solver = CaDiCaLSolver::new();
 ///     solver.add_clause(&vec![1, 2]);
 ///     solver.add_clause(&vec![-1, -2]);
@@ -48,7 +48,7 @@ use super::base::{Solver, Status};
 ///  To use the `CaDiCaLSolver`, ensure the `cadical` feature is enabled in your `Cargo.toml`:
 ///  ```toml
 ///  [dependencies]
-///  rssat = { version = "x.y.z", features = ["cadical"] }
+///  satgalaxy = { version = "x.y.z", features = ["cadical"] }
 pub struct CaDiCaLSolver {
     inner: CaDiCaL_Solver,
 }

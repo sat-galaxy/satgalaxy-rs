@@ -20,35 +20,35 @@ struct DIMACSParser;
 /// Parses a DIMACS CNF format string into a `CnfFormula` struct.
 /// # Example
 /// ```rust
-///  use rssat::parser::parse_dimacs_cnf;
-///
+///  use satgalaxy::parser::parse_dimacs_cnf;
+/// let mut cnf=Vec::new();
 /// let dimacs_content = "c This is a comment
 /// p cnf 3 2
 /// 1 -3 0
 /// ";
-///     match parse_dimacs_cnf(dimacs_content,false) {
-///         Ok(cnf) => {
-///             assert_eq!(cnf.num_vars,3);
-///             assert_eq!(cnf.num_clauses,2);
+///     match parse_dimacs_cnf(dimacs_content,false,&mut cnf) {
+///         Ok(_) => {
+///             println!("Parsed CNF: {:?}", cnf);
 ///         },
 ///         Err(e) => println!("Error: {:?}", e),
 ///    }
 /// ```
 ///
 /// # Usage
-///  To use the `parse_dimacs_cnf`, ensure the `dimacs_` feature is enabled in your `Cargo.toml`:
+///  To use the `parse_dimacs_cnf`, ensure the `parser` feature is enabled in your `Cargo.toml`:
 ///  ```toml
 ///  [dependencies]
-///  rssat = { version = "x.y.z", features = ["dimacs_"] }
+///  satgalaxy = { version = "x.y.z", features = ["parser"] }
 /// ```
 /// # Arguments
 ///
 /// * `input` - A string slice that holds the content of the DIMACS CNF file.
 /// * `strict` - A boolean flag that determines whether to enforce strict parsing rules.
+/// *  `dim` - A immutable reference to an implement of `AsDimacs`  containing the parsed DIMACS CNF data.
 ///
 /// # Returns
 ///
-/// * `Ok(CnfFormula)` - If parsing is successful, returns a `CnfFormula` struct.
+/// * `Ok(())` - If parsing is successful.
 /// * `Err(ParserError)` - If parsing fails, returns a `ParserError`.
 ///
 /// # Errors
@@ -119,7 +119,7 @@ pub fn parse_dimacs_cnf<D: AsDimacs>(
     Ok(())
 }
 
-/// Reads a DIMACS CNF file from a given path or standard input and parses it into a `CnfFormula`.
+/// Reads a DIMACS CNF file from a given path or standard input and parses it`.
 pub fn read_dimacs_from_file<P: AsRef<Path>, D: AsDimacs>(
     path: P,
     strict: bool,
@@ -128,7 +128,7 @@ pub fn read_dimacs_from_file<P: AsRef<Path>, D: AsDimacs>(
     let mut reader = File::open(path)?;
     read_dimacs_from_reader(&mut reader, strict, dim)
 }
-
+/// Reads a DIMACS CNF file from a given reader and parses it.
 pub fn read_dimacs_from_reader<R: Read, D: AsDimacs>(
     reader: R,
     strict: bool,

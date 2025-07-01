@@ -6,6 +6,7 @@ pub(crate) use dimacs::Rule;
 
 use crate::solver::SatSolver;
 
+/// A problem to be solved.
 #[cfg(feature = "parser")]
 pub struct Problem {
     pub clauses: Vec<Vec<i32>>,
@@ -38,7 +39,7 @@ pub trait AsDimacs {
 
 impl<T: SatSolver> AsDimacs for T {
     fn add_clause(&mut self, clause: Vec<i32>) {
-        self.add_clause(&clause);
+        SatSolver::add_clause(self, &clause);
     }
     fn add_comment(&mut self, _comment: String) {}
 }
