@@ -20,6 +20,8 @@
 mod bindings {
     include!(concat!(env!("OUT_DIR"), "/minisat_bindings.rs"));
 }
+use crate::errors::OptionError;
+
 use super::{RawStatus, SatSolver, Status};
 use std::ffi::{c_int, c_void};
 
@@ -51,7 +53,7 @@ use std::ffi::{c_int, c_void};
 ///  ```toml
 ///  [dependencies]
 ///  satgalaxy = { version = "x.y.z", features = ["minisat"] }
-/// 
+///
 pub struct MinisatSolver(*const c_void);
 unsafe impl Sync for MinisatSolver {}
 unsafe impl Send for MinisatSolver {}
@@ -61,165 +63,98 @@ impl Default for MinisatSolver {
         Self::new()
     }
 }
+macro_rules! minisat_opt_set {
+    ($name:ident,$type:ty,$doc:expr) => {
+        minisat_opt_set!($name, $name, $type, $doc);
+    };
+    ($name:ident,$ffi_name:ident,$type:ty,$doc:expr) => {
+        paste::paste! {
+            #[doc=$doc]
+            pub fn [<set_opt_$name>](value: $type) -> Result<(), OptionError> {
+                let code = unsafe {
+                     bindings::[<minisat_set_opt_$ffi_name>](value.into())
+                    };
+
+                if code!=0{
+                    return Err(OptionError(Self::error_msg(code)));
+                }
+                Ok(())
+            }
+        }
+    };
+}
 
 impl MinisatSolver {
-    /// The variable activity decay factor(0~1). default: 0.95
-    pub fn set_opt_var_decay(decay: f64) {
+    fn error_msg(code: i32) -> &'static str {
         unsafe {
-            bindings::minisat_set_opt_var_decay(decay);
+            let msg = bindings::minisat_error_msg(code);
+            let msg = std::ffi::CStr::from_ptr(msg);
+            msg.to_str().unwrap()
         }
     }
-    /// The clause activity decay factor default: 0.999
-    pub fn set_opt_clause_decay(decay: f64) {
-        unsafe {
-            bindings::minisat_set_opt_clause_decay(decay);
-        }
-    }
+    minisat_opt_set!(var_decay, var_decay, f64, "The variable activity decay factor. \n\n value must be in (0, 1)");
+    minisat_opt_set!(clause_decay, clause_decay, f64, "The clause activity decay factor. \n\n value must be in (0, 1)");
+    minisat_opt_set!(random_var_freq, random_var_freq, f64, "The frequency with which the decision heuristic tries to choose a random variable. \n\n value must be in [0,1]");
+    minisat_opt_set!(random_seed, random_seed, f64, "Used by the random variable selection. \n\n value must be positive");
+    minisat_opt_set!(ccmin_mode, ccmin_mode, i32, "Controls conflict clause minimization. \n\n value must be 0, 1, or 2 (0=none, 1=basic, 2=deep)");
+    minisat_opt_set!(phase_saving, phase_saving, i32, "Controls the level of phase saving. \n\n value must be 0, 1, or 2 (0=none, 1=limited, 2=full)");
+    minisat_opt_set!(rnd_init_act, rnd_init_act, bool, "Randomize the initial activity. ");
+    minisat_opt_set!(luby_restart, luby_restart, bool, "Use the Luby restart sequence. ");
+    minisat_opt_set!(restart_first, restart_first, i32, "The base restart interval. \n\n value must be a positive integer");
+    minisat_opt_set!(restart_inc, restart_inc, f64, "Restart interval increase factor. \n\n value must be at least 1.0");
+    minisat_opt_set!(garbage_frac, garbage_frac, f64, "The fraction of wasted memory allowed before a garbage collection is triggered. \n\n value must be positive");
+    minisat_opt_set!(min_learnts_lim, min_learnts_lim, i32, "Minimum learnt clause limit. \n\n value must be at least 0");
+    minisat_opt_set!(use_asymm, use_asymm, bool, "Shrink clauses by asymmetric branching. ");
+    minisat_opt_set!(use_rcheck, use_rcheck, bool, "Check if a clause is already implied (costly). ");
+    minisat_opt_set!(use_elim, use_elim, bool, "Perform variable elimination. ");
+    minisat_opt_set!(grow, grow, i32, "Allow a variable elimination step to grow by a number of clauses. \n\n value must be at least 0");
+    minisat_opt_set!(clause_lim, clause_lim, i32, "Variables are not eliminated if it produces a resolvent with a length above this limit. \n\n value must be at least -1 (-1 means no limit)");
+    minisat_opt_set!(subsumption_lim, subsumption_lim, i32, "Do not check if subsumption against a clause larger than this. \n\n value must be at least -1 (-1 means no limit)");
+    minisat_opt_set!(simp_garbage_frac, simp_garbage_frac, f64, "The fraction of wasted memory allowed before a garbage collection is triggered during simplification. \n\n value must be positive");
+    minisat_opt_set!(verbosity, verbosity, i32, "Verbosity level. \n\n value must be 0, 1, or 2 (0=silent, 1=some, 2=more)");
 
-    /// The frequency with which the decision heuristic tries to choose a random variable
-    pub fn set_opt_random_var_freq(freq: f64) {
-        unsafe {
-            bindings::minisat_set_opt_random_var_freq(freq);
-        }
-    }
-
-    pub fn set_opt_random_seed(seed: f64) {
-        unsafe {
-            bindings::minisat_set_opt_random_seed(seed);
-        }
-    }
-
-    pub fn set_opt_ccmin_mode(mode: i32) {
-        unsafe {
-            bindings::minisat_set_opt_ccmin_mode(mode);
-        }
-    }
-
-    pub fn set_opt_phase_saving(mode: i32) {
-        unsafe {
-            bindings::minisat_set_opt_phase_saving(mode);
-        }
-    }
-
-    pub fn set_opt_rnd_init_act(flag: bool) {
-        unsafe {
-            bindings::minisat_set_opt_rnd_init_act(flag.into());
-        }
-    }
-
-    pub fn set_opt_luby_restart(flag: bool) {
-        unsafe {
-            bindings::minisat_set_opt_luby_restart(flag.into());
-        }
-    }
-    pub fn set_opt_restart_first(restart_first: i32) {
-        unsafe {
-            bindings::minisat_set_opt_restart_first(restart_first);
-        }
-    }
-    pub fn set_opt_restart_inc(restart_inc: f64) {
-        unsafe {
-            bindings::minisat_set_opt_restart_inc(restart_inc);
-        }
-    }
-    pub fn set_opt_min_learnts_lim(min_learnts_lim: i32) {
-        unsafe {
-            bindings::minisat_set_opt_min_learnts_lim(min_learnts_lim);
-        }
-    }
-    pub fn set_opt_use_asymm(opt_use_asymm: bool) {
-        unsafe {
-            bindings::minisat_set_opt_use_asymm(opt_use_asymm.into());
-        }
-    }
-
-    pub fn set_opt_use_rcheck(opt_use_rcheck: bool) {
-        unsafe {
-            bindings::minisat_set_opt_use_rcheck(opt_use_rcheck.into());
-        }
-    }
-
-    pub fn set_opt_use_elim(opt_use_elim: bool) {
-        unsafe {
-            bindings::minisat_set_opt_use_elim(opt_use_elim.into());
-        }
-    }
-
-    pub fn set_opt_grow(opt_grow: i32) {
-        unsafe {
-            bindings::minisat_set_opt_grow(opt_grow);
-        }
-    }
-
-    pub fn set_opt_clause_lim(opt_clause_lim: i32) {
-        unsafe {
-            bindings::minisat_set_opt_clause_lim(opt_clause_lim);
-        }
-    }
-    pub fn set_opt_subsumption_lim(opt_subsumption_lim: i32) {
-        unsafe {
-            bindings::minisat_set_opt_subsumption_lim(opt_subsumption_lim);
-        }
-    }
-
-    pub fn set_opt_simp_garbage_frac(opt_simp_garbage_frac: f64) {
-        unsafe {
-            bindings::minisat_set_opt_simp_garbage_frac(opt_simp_garbage_frac);
-        }
-    }
-    pub fn set_opt_garbage_frac(garbage_frac: f64) {
-        unsafe {
-            bindings::minisat_set_opt_garbage_frac(garbage_frac);
-        }
-    }
-    pub fn set_opt_verbosity(verb: i32) {
-        unsafe {
-            bindings::minisat_set_opt_verbosity(verb);
-        }
-    }
-
+    /// create a new solver
     pub fn new() -> Self {
-        unsafe {
-            MinisatSolver(
-                bindings::minisat_new_solver()
-            )
-        }
+        unsafe { MinisatSolver(bindings::minisat_new_solver()) }
     }
-    pub fn vars(& self) -> i32 {
+    /// The current number of variables.
+    pub fn vars(&self) -> i32 {
         unsafe { bindings::minisat_nvars(self.0) }
     }
-    pub fn new_var(& self) -> i32 {
+    /// Create a new variable
+    pub fn new_var(&self) -> i32 {
         unsafe { bindings::minisat_new_var(self.0) as i32 }
     }
-    pub fn release_var(& self, var: i32) {
+    /// Release a variable.
+    pub fn release_var(&self, var: i32) {
         unsafe {
             bindings::minisat_release_var(self.0, var as c_int);
         }
     }
-
-    pub fn add_clause(& self, clause: &[i32]) {
+    /// Add a clause to the solver.
+    pub fn add_clause(&self, clause: &[i32]) {
         unsafe {
-            bindings::minisat_add_clause(
-                self.0,
-                clause.as_ptr(),
-                clause.len().try_into().unwrap(),
-            );
+            bindings::minisat_add_clause(self.0, clause.as_ptr(), clause.len().try_into().unwrap());
         }
     }
-    pub fn add_empty_clause(& self) {
+    /// Add an empty clause to the solver. (unsat)
+    pub fn add_empty_clause(&self) {
         unsafe {
             bindings::minisat_add_empty_clause(self.0);
         }
     }
-    pub fn value(& self, var: i32) -> bool {
+    ///  The current assignments for the variables
+    pub fn value(&self, var: i32) -> bool {
         unsafe { bindings::minisat_value(self.0, var as c_int) != 0 }
     }
-    pub fn model_value(& self, var: i32) -> bool {
+    // The model assignments for the variables
+    pub fn model_value(&self, var: i32) -> bool {
         unsafe { bindings::minisat_model_value(self.0, var as c_int) != 0 }
     }
-    pub fn solve_assumps(& self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> bool {
+    // Solving with assumptions, do_simp (recommend true) and turn_off_simp (recommend false)
+    pub fn solve_assumps(&self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> bool {
         unsafe {
-             bindings::minisat_solve_assumps(
+            bindings::minisat_solve_assumps(
                 self.0,
                 assumps.as_ptr(),
                 assumps.len().try_into().unwrap(),
@@ -228,13 +163,8 @@ impl MinisatSolver {
             ) == 1
         }
     }
-
-    pub fn solve_limited(
-        & self,
-        assumps: &[i32],
-        do_simp: bool,
-        turn_off_simp: bool,
-    ) -> RawStatus {
+    /// Solving, do_simp (recommend true) and turn_off_simp (recommend false)
+    pub fn solve_limited(&self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> RawStatus {
         unsafe {
             match bindings::minisat_solve_limited(
                 self.0,
@@ -249,32 +179,34 @@ impl MinisatSolver {
             }
         }
     }
-
-    pub fn solve(& self, do_simp: bool, turn_off_simp: bool) -> bool {
-        unsafe {
-            bindings::minisat_solve(self.0, do_simp.into(), turn_off_simp.into()) == 1
-        }
+    /// Solving, do_simp (recommend true) and turn_off_simp (recommend false)
+    pub fn solve(&self, do_simp: bool, turn_off_simp: bool) -> bool {
+        unsafe { bindings::minisat_solve(self.0, do_simp.into(), turn_off_simp.into()) == 1 }
     }
-    pub fn eliminate(& self, turn_off_simp: bool) {
+    /// Perform variable elimination based simplification. turn_off_simp (recommend false)
+    pub fn eliminate(&self, turn_off_simp: bool) {
         unsafe {
             bindings::minisat_eliminate(self.0, turn_off_simp.into());
         }
     }
-    pub fn assigns(& self) -> usize {
+    /// The current number of assigned literals.
+    pub fn assigns(&self) -> usize {
         unsafe { bindings::minisat_nassigns(self.0) as usize }
     }
-    pub fn clauses(& self) -> usize {
+    /// The current number of original clauses.
+    pub fn clauses(&self) -> usize {
         unsafe { bindings::minisat_nclauses(self.0) as usize }
     }
-    pub fn learnts(& self) -> usize {
+    /// The current number of learnt clauses.
+    pub fn learnts(&self) -> usize {
         unsafe { bindings::minisat_nlearnts(self.0) as usize }
     }
 
-    pub fn okay(& self) -> bool {
+    pub fn okay(&self) -> bool {
         unsafe { bindings::minisat_okay(self.0) == 1 }
     }
-
-    pub fn model(& self) -> Vec<i32> {
+    /// Get current model if the solver is satisfiable.
+    pub fn model(&self) -> Vec<i32> {
         (1..self.vars() + 1)
             .filter(|lit| self.model_value(*lit))
             .collect()
@@ -282,7 +214,7 @@ impl MinisatSolver {
 }
 
 impl SatSolver for MinisatSolver {
-    fn solve_model(& self) -> Status {
+    fn solve_model(&self) -> Status {
         self.eliminate(true);
         match self.solve_limited(&[], true, false) {
             RawStatus::Satisfiable => Status::Satisfiable(self.model()),
@@ -296,7 +228,7 @@ impl SatSolver for MinisatSolver {
     }
 }
 impl Drop for MinisatSolver {
-    fn drop(& mut self) {
+    fn drop(&mut self) {
         unsafe {
             bindings::minisat_destroy(self.0);
         }

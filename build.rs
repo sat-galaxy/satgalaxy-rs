@@ -18,6 +18,7 @@ fn binding_satsolver(path: &str, name: &str) {
             name
         )])
         .allowlist_function(format!("{}_.*", name))
+        .generate_comments(true)
         .generate()
         .expect("Unable to generate bindings");
 
