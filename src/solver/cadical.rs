@@ -289,6 +289,11 @@ impl CaDiCaLSolver {
         cadical_terminate() -> ();
         as terminate
     }
+    ffi_bind! {
+        /// Get the number of variables.
+        cadical_vars() -> i32;
+        as vars
+    }
 
     ffi_bind! {
         /// Freeze a literal.
@@ -867,26 +872,37 @@ impl CaDiCaLSolver {
     ///
      cadical_set_opt_walkreleff(walkreleff: i32) -> bool => |v|v!=0; as set_opt_walkreleff }
 
-
     pub fn model(&mut self) -> Result<Vec<i32>, SolverError> {
-        Ok(vec![])
+        let vars = self.vars()?;
+        let mut model = vec![];
+        for lit in 1..vars + 1 {
+            if self.val(lit)? > 0 {
+                model.push(lit);
+            }
+        }
+        Ok(model)
     }
 }
 
 impl SatSolver for CaDiCaLSolver {
-    fn solve_model(&self) -> Status {
-        unsafe { Status::Unknown }
+    fn solve_model(&mut self) -> Result<Status, SolverError> {
+        let status = self.solve()?;
+
+        return match status {
+            RawStatus::Satisfiable => self.model().map(Status::Satisfiable),
+            RawStatus::Unsatisfiable => Ok(Status::Unsatisfiable),
+            RawStatus::Unknown => Ok(Status::Unknown),
+        };
     }
-    fn add_clause(&self, clause: &[i32]) {
-        // unsafe {
-        //     self.inner.clause6(clause.as_ptr(), clause.len());
-        // }
+
+    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
+        CaDiCaLSolver::add_clause(self, clause)
     }
 }
 impl Drop for CaDiCaLSolver {
     fn drop(&mut self) {
         unsafe {
-            // self.inner.destruct();
+            binding::cadical_destroy(self.0);
         }
     }
 }

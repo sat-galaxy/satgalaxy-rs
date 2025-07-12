@@ -11,6 +11,8 @@ pub mod minisat;
 #[cfg(feature = "minisat")]
 pub use minisat::MinisatSolver;
 
+use crate::errors::SolverError;
+
 #[macro_export]
 macro_rules! create_solver {
     (cadical) => {
@@ -55,6 +57,7 @@ impl Default for Status {
 }
 
 pub trait SatSolver {
-    fn add_clause(& self, clause: &[i32]);
-    fn solve_model(& self) -> Status;
+    fn add_clause(& mut self, clause: &[i32])->Result<(),SolverError>;
+
+    fn solve_model(& mut self) -> Result<Status,SolverError>;
 }

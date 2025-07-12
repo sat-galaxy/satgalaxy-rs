@@ -139,30 +139,30 @@ glucose_opt_set!(verbosity, i32, "Verbosity level (0=silent,1=some,2=more)\n\n# 
         unsafe { GlucoseSolver(bindings::glucose_new_solver()) }
     }
 
-    pub fn vars(&self) -> i32 {
+    pub fn vars(&mut self) -> i32 {
         unsafe { bindings::glucose_nvars(self.0) }
     }
-    pub fn new_var(&self) -> i32 {
+    pub fn new_var(&mut self) -> i32 {
         unsafe { bindings::glucose_new_var(self.0) as i32 }
     }
 
-    pub fn add_clause(&self, clause: &[i32]) {
+    pub fn add_clause(&mut self, clause: &[i32]) {
         unsafe {
             bindings::glucose_add_clause(self.0, clause.as_ptr(), clause.len().try_into().unwrap());
         }
     }
-    pub fn add_empty_clause(&self) {
+    pub fn add_empty_clause(&mut self) {
         unsafe {
             bindings::glucose_add_empty_clause(self.0);
         }
     }
-    pub fn value(&self, var: i32) -> bool {
+    pub fn value(&mut self, var: i32) -> bool {
         unsafe { bindings::glucose_value(self.0, var as c_int) != 0 }
     }
-    pub fn model_value(&self, var: i32) -> bool {
+    pub fn model_value(&mut self, var: i32) -> bool {
         unsafe { bindings::glucose_model_value(self.0, var as c_int) != 0 }
     }
-    pub fn solve_assumps(&self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> bool {
+    pub fn solve_assumps(&mut self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> bool {
         unsafe {
             bindings::glucose_solve_assumps(
                 self.0,
@@ -174,7 +174,7 @@ glucose_opt_set!(verbosity, i32, "Verbosity level (0=silent,1=some,2=more)\n\n# 
         }
     }
 
-    pub fn solve_limited(&self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> RawStatus {
+    pub fn solve_limited(&mut self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> RawStatus {
         unsafe {
             match bindings::glucose_solve_limited(
                 self.0,
@@ -190,29 +190,29 @@ glucose_opt_set!(verbosity, i32, "Verbosity level (0=silent,1=some,2=more)\n\n# 
         }
     }
 
-    pub fn solve(&self, do_simp: bool, turn_off_simp: bool) -> bool {
+    pub fn solve(&mut self, do_simp: bool, turn_off_simp: bool) -> bool {
         unsafe { bindings::glucose_solve(self.0, do_simp.into(), turn_off_simp.into()) == 1 }
     }
-    pub fn eliminate(&self, turn_off_simp: bool) {
+    pub fn eliminate(&mut self, turn_off_simp: bool) {
         unsafe {
             bindings::glucose_eliminate(self.0, turn_off_simp.into());
         }
     }
-    pub fn assigns(&self) -> usize {
+    pub fn assigns(&mut self) -> usize {
         unsafe { bindings::glucose_nassigns(self.0) as usize }
     }
-    pub fn clauses(&self) -> usize {
+    pub fn clauses(&mut self) -> usize {
         unsafe { bindings::glucose_nclauses(self.0) as usize }
     }
-    pub fn learnts(&self) -> usize {
+    pub fn learnts(&mut self) -> usize {
         unsafe { bindings::glucose_nlearnts(self.0) as usize }
     }
 
-    pub fn okay(&self) -> bool {
+    pub fn okay(&mut self) -> bool {
         unsafe { bindings::glucose_okay(self.0) == 1 }
     }
 
-    pub fn model(&self) -> Vec<i32> {
+    pub fn model(&mut self) -> Vec<i32> {
         (1..self.vars() + 1)
             .filter(|lit| self.model_value(*lit))
             .collect()
@@ -220,17 +220,18 @@ glucose_opt_set!(verbosity, i32, "Verbosity level (0=silent,1=some,2=more)\n\n# 
 }
 
 impl SatSolver for GlucoseSolver {
-    fn solve_model(&self) -> Status {
+    fn solve_model(&mut self) -> Result<Status, SolverError> {
         self.eliminate(true);
         match self.solve_limited(&[], true, false) {
-            RawStatus::Satisfiable => Status::Satisfiable(self.model()),
-            RawStatus::Unsatisfiable => Status::Unsatisfiable,
-            RawStatus::Unknown => Status::Unknown,
+            RawStatus::Satisfiable => Ok(Status::Satisfiable(self.model())),
+            RawStatus::Unsatisfiable => Ok(Status::Unsatisfiable),
+            RawStatus::Unknown => Ok(Status::Unknown),
         }
     }
 
-    fn add_clause(&self, clause: &[i32]) {
+    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         GlucoseSolver::add_clause(self, clause);
+        Ok(())
     }
 }
 impl Drop for GlucoseSolver {

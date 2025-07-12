@@ -15,7 +15,7 @@ mod tests {
         let mut solver = solver::cadical::CaDiCaLSolver::new();
         solver.add_clause(&vec![1]);
         solver.add_clause(&vec![-1]);
-        match solver.solve_model() {
+        match solver.solve_model().unwrap() {
             Status::Satisfiable(_vec) => {
                 assert_eq!(1, 0);
             }
@@ -33,7 +33,7 @@ mod tests {
         let mut solver = solver::MinisatSolver::new();
         solver.add_clause(&[1]);
         solver.add_clause(&[-1]);
-        match solver.solve_model() {
+        match solver.solve_model().unwrap() {
             Status::Satisfiable(_vec) => {
                 assert_eq!(1, 0);
             }
@@ -51,7 +51,7 @@ mod tests {
         let mut solver = solver::glucose::GlucoseSolver::new();
         solver.add_clause(&[1]);
         solver.add_clause(&[-1]);
-        match solver.solve_model() {
+        match solver.solve_model().unwrap() {
             Status::Satisfiable(_vec) => {
                 assert_eq!(1, 0);
             }
