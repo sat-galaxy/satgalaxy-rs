@@ -32,7 +32,10 @@ fn binding_glucose(version: &str) {
     let path = format!("glucose-{}", version);
     binding_satsolver(&path, "glucose");
 }
-fn binding_cadical(_version: &str) {}
+fn binding_cadical(version: &str) {
+     let path = format!("cadical-rel-{}", version);
+    binding_satsolver(&path, "cadical");
+}
 fn binding_minisat() {
     binding_satsolver("minisat", "minisat");
 }

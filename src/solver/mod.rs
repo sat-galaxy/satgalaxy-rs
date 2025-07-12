@@ -32,6 +32,16 @@ impl Default for RawStatus {
         Self::Unknown
     }
 }
+
+impl From<i32> for RawStatus {
+    fn from(value: i32) -> Self {
+        match value {
+            10 => Self::Satisfiable,
+            20 => Self::Unsatisfiable,
+            _ => Self::Unknown,
+        }
+    }
+}
 pub enum Status {
     Satisfiable(Vec<i32>),
     Unsatisfiable,

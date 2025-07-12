@@ -15,14 +15,14 @@ mod tests {
         let mut solver = solver::cadical::CaDiCaLSolver::new();
         solver.add_clause(&vec![1]);
         solver.add_clause(&vec![-1]);
-        match solver.solve() {
-            Status::SATISFIABLE(_vec) => {
+        match solver.solve_model() {
+            Status::Satisfiable(_vec) => {
                 assert_eq!(1, 0);
             }
-            Status::UNSATISFIABLE => {
+            Status::Unsatisfiable => {
                 assert_eq!(true, true)
             }
-            Status::UNKNOWN => {
+            Status::Unknown => {
                 assert_eq!(10, 0);
             }
         }

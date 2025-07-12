@@ -20,7 +20,7 @@
 mod bindings {
     include!(concat!(env!("OUT_DIR"), "/minisat_bindings.rs"));
 }
-use crate::errors::OptionError;
+use crate::errors::SolverError;
 
 use super::{RawStatus, SatSolver, Status};
 use std::ffi::{c_int, c_void};
@@ -70,13 +70,13 @@ macro_rules! minisat_opt_set {
     ($name:ident,$ffi_name:ident,$type:ty,$doc:expr) => {
         paste::paste! {
             #[doc=$doc]
-            pub fn [<set_opt_$name>](value: $type) -> Result<(), OptionError> {
+            pub fn [<set_opt_$name>](value: $type) -> Result<(), SolverError> {
                 let code = unsafe {
                      bindings::[<minisat_set_opt_$ffi_name>](value.into())
                     };
 
                 if code!=0{
-                    return Err(OptionError(Self::error_msg(code)));
+                    return Err(SolverError(Self::error_msg(code)));
                 }
                 Ok(())
             }

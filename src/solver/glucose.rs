@@ -23,7 +23,7 @@ mod bindings {
 use std::{ffi::c_int, os::raw::c_void};
 
 use crate::{
-    errors::OptionError,
+    errors::SolverError,
     solver::{RawStatus, SatSolver, Status},
 };
 
@@ -70,13 +70,13 @@ macro_rules! glucose_opt_set {
         ($name:ident,$ffi_name:ident,$type:ty,$doc:expr) => {
         paste::paste! {
             #[doc=$doc]
-            pub fn [<set_opt_$name>](value: $type) -> Result<(), OptionError> {
+            pub fn [<set_opt_$name>](value: $type) -> Result<(), SolverError> {
                 let code = unsafe {
                      bindings::[<glucose_set_opt_$ffi_name>](value.into())
                     };
 
                 if code!=0{
-                    return Err(OptionError(Self::error_msg(code)));
+                    return Err(SolverError(Self::error_msg(code)));
                 }
                 Ok(())
             }

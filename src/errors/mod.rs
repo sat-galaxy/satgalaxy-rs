@@ -6,15 +6,15 @@ use std::error::Error;
 pub use parser::ParserError;
 
 #[derive(Debug)]
-pub struct  OptionError(pub &'static str);
+pub struct  SolverError(pub &'static str);
 
-impl std::fmt::Display for OptionError {
+impl std::fmt::Display for SolverError   {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-impl Error for OptionError {
+impl Error for SolverError {
     fn description(&self) -> &str {
         self.0
     }
