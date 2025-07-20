@@ -22,8 +22,7 @@ mod binding {
 }
 
 use std::{
-    ffi::{c_char, c_int},
-    os::raw,
+    ffi::{c_char, c_int}, fmt::Display, os::raw
 };
 
 use crate::{errors::SolverError, solver::RawStatus};
@@ -61,13 +60,18 @@ macro_rules! ffi_bind {
     };
 }
 
-fn ptr_to_vec<T>(ptr: *const T) -> Vec<T> {
+fn ptr_to_vec<T:Display+PartialEq+std::cmp::PartialEq<i32>>(ptr: *const T) -> Vec<T> {
     let mut vec = Vec::new();
     let mut curr = ptr;
-    while !curr.is_null() {
+    let mut v=unsafe {
+    curr.read()
+    };
+
+    while !curr.is_null() && v != 0 {
         unsafe {
-            vec.push(curr.read());
-            curr = curr.offset(1);
+            vec.push(v);
+            curr = curr.offset(2);
+            v=curr.read();
         }
     }
     vec
@@ -126,7 +130,7 @@ impl PicoSATSolver {
     /// * `length` - Length of the array
     pub fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         unsafe {
-            binding::picosat_s_add_lits(self.0, clause.as_ptr());
+            binding::picosat_s_add_lits(self.0, clause.as_ptr(), clause.len());
         }
         self.error()?;
         Ok(())
@@ -479,20 +483,6 @@ impl PicoSATSolver {
         as add
     }
 
-    ffi_bind! {
-        /// Adds multiple literals to the solver
-        ///
-        /// # Arguments
-        /// * `lits` - Array of literals terminated by zero
-        ///
-        /// # Note
-        /// Adding literals resets the previous assignment
-        ///
-        /// # Returns
-        /// Original clause index for the added clause
-        picosat_s_add_lits (lits: *const i32) -> i32;
-        as add_lits
-    }
 
     // ffi_bind! {
     //     /// Prints the CNF to a file in DIMACS format

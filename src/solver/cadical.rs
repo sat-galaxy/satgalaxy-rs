@@ -111,7 +111,7 @@ impl CaDiCaLSolver {
     /// * `length` - Length of the array
     pub fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         unsafe {
-            binding::cadical_add_clause(self.0, clause.as_ptr(), clause.len() as u32);
+            binding::cadical_add_clause(self.0, clause.as_ptr(), clause.len() as u64);
         }
         self.error()?;
         Ok(())

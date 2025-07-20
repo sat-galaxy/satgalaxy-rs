@@ -23,7 +23,7 @@ macro_rules! create_solver {
         $crate::minisat::MiniSatSolver::new()
     };
 }
-
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RawStatus {
     Satisfiable,
     Unsatisfiable,
@@ -45,6 +45,7 @@ impl From<i32> for RawStatus {
         }
     }
 }
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Status {
     Satisfiable(Vec<i32>),
     Unsatisfiable,
