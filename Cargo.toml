@@ -35,8 +35,9 @@ cmake = "0.1"
 
 [features]
 cadical = []
-default = ["minisat", "parser", "glucose","cadical"]
+default = ["minisat", "parser", "glucose","cadical","picosat"]
 parser = ["dep:pest", "dep:pest_derive"]
 glucose = []
 minisat = []
+picosat=[]
 compression=["dep:flate2","dep:xz2"]

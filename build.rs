@@ -39,6 +39,10 @@ fn binding_cadical(version: &str) {
 fn binding_minisat() {
     binding_satsolver("minisat", "minisat");
 }
+fn binding_picosat(version: &str) {
+    let path = format!("picosat-{}", version);
+    binding_satsolver(&path, "picosat");
+}
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     if cfg!(feature = "cadical") {
@@ -49,6 +53,9 @@ fn main() {
     }
     if cfg!(feature = "glucose") {
         binding_glucose("4.2.1");
+    }
+    if cfg!(feature = "picosat") {
+        binding_picosat("960");
     }
     let target = env::var("TARGET").unwrap();
     if target.contains("linux") {

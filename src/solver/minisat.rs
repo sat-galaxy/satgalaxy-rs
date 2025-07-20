@@ -54,7 +54,7 @@ use std::ffi::{c_int, c_void};
 ///  [dependencies]
 ///  satgalaxy = { version = "x.y.z", features = ["minisat"] }
 ///
-pub struct MinisatSolver(*const c_void);
+pub struct MinisatSolver(*mut bindings::MiniSATSolver);
 unsafe impl Sync for MinisatSolver {}
 unsafe impl Send for MinisatSolver {}
 
