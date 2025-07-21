@@ -21,11 +21,11 @@ mod binding {
     include!(concat!(env!("OUT_DIR"), "/cadical_bindings.rs"));
 }
 
-use std::ffi::{c_char, c_int};
+use std::{ffi::c_char, ptr::NonNull};
 
 use crate::{errors::SolverError, solver::RawStatus};
 
-use super::{SatSolver, SatStatus};
+use super::{SatSolver};
 
 macro_rules! ffi_bind {
     (
@@ -36,7 +36,7 @@ macro_rules! ffi_bind {
         $(#[$doc])*
         pub fn $rust_name(&mut self, $($arg: $arg_ty),*) -> Result<$ret, SolverError> {
             unsafe {
-                let ret = binding::$c_name(self.0 $(, $arg.into())*);
+                let ret = binding::$c_name(self.inner.as_ptr() $(, $arg.into())*);
                 self.error()?;
                 Ok(ret.into())
             }
@@ -50,7 +50,7 @@ macro_rules! ffi_bind {
         $(#[$doc])*
         pub fn $rust_name(&mut self, $($arg: $arg_ty),*) -> Result<$ret, SolverError> {
             unsafe {
-                let $raw_var = binding::$c_name(self.0 $(, $arg.into())*);
+                let $raw_var = binding::$c_name(self.inner.as_ptr() $(, $arg.into())*);
                 self.error()?;
                 Ok($convert)
             }
@@ -63,20 +63,20 @@ macro_rules! ffi_bind {
 /// This struct is only available when the `cadical` feature is enabled.
 /// # Example
 /// ```rust
-/// use satgalaxy::solver::{CaDiCaLSolver, Status,Solver};
+/// use satgalaxy::solver::{CaDiCaLSolver, SatStatus, SatSolver};
 /// let mut solver = CaDiCaLSolver::new();
 ///     solver.add_clause(&vec![1, 2]);
 ///     solver.add_clause(&vec![-1, -2]);
 ///     solver.add_clause(&vec![3]);
 ///
 /// match solver.solve() {
-///    Status::SATISFIABLE(vec) => {
+///    SatStatus::Satisfiable(vec) => {
 ///         println!("Satisfiable solution: {:?}", vec);
 ///     },
-///     Status::UNSATISFIABLE => {
+///     SatStatus::Unsatisfiable => {
 ///         println!("Unsatisfiable");
 ///     },
-///     Status::UNKNOWN => {
+///     SatStatus::Unknown => {
 ///         println!("Unknown");
 ///     },
 /// }
@@ -86,7 +86,9 @@ macro_rules! ffi_bind {
 ///  ```toml
 ///  [dependencies]
 ///  satgalaxy = { version = "x.y.z", features = ["cadical"] }
-pub struct CaDiCaLSolver(*mut binding::CaDiCaLSolver);
+pub struct CaDiCaLSolver{
+    inner: NonNull<binding::CaDiCaLSolver>,
+}
 impl Default for CaDiCaLSolver {
     fn default() -> Self {
         Self::new()
@@ -94,11 +96,11 @@ impl Default for CaDiCaLSolver {
 }
 impl CaDiCaLSolver {
     pub fn new() -> Self {
-        unsafe { CaDiCaLSolver(binding::cadical_new_solver()) }
+        unsafe { CaDiCaLSolver { inner: NonNull::new(binding::cadical_new_solver()).unwrap() } }
     }
     fn error(&mut self) -> Result<(), SolverError> {
         unsafe {
-            let code = binding::cadical_error(self.0);
+            let code = binding::cadical_error(self.inner.as_ptr());
             if code != 0 {
                 let msg = binding::cadical_error_message(code);
                 let msg = std::ffi::CStr::from_ptr(msg);
@@ -115,7 +117,7 @@ impl CaDiCaLSolver {
     /// * `length` - Length of the array
     pub fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         unsafe {
-            binding::cadical_add_clause(self.0, clause.as_ptr(), clause.len());
+            binding::cadical_add_clause(self.inner.as_ptr(), clause.as_ptr(), clause.len());
         }
         self.error()?;
         Ok(())
@@ -210,7 +212,7 @@ impl CaDiCaLSolver {
         let name = name.as_bytes();
         let name = name.as_ptr() as *const c_char;
         unsafe {
-            binding::cadical_set_option(self.0, name, val);
+            binding::cadical_set_option(self.inner.as_ptr(), name, val);
         }
         self.error()?;
         Ok(true)
@@ -239,7 +241,7 @@ impl CaDiCaLSolver {
     pub fn get_option(&mut self, name: &str) -> Result<i32, SolverError> {
         let name = name.as_bytes();
         let name = name.as_ptr() as *const c_char;
-        let ret = unsafe { binding::cadical_get_option(self.0, name) };
+        let ret = unsafe { binding::cadical_get_option(self.inner.as_ptr(), name) };
         self.error()?;
         Ok(ret)
     }
@@ -900,7 +902,7 @@ impl SatSolver for CaDiCaLSolver {
 impl Drop for CaDiCaLSolver {
     fn drop(&mut self) {
         unsafe {
-            binding::cadical_destroy(self.0);
+            binding::cadical_destroy(self.inner.as_ptr());
         }
     }
 }

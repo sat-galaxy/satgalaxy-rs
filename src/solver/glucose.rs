@@ -20,31 +20,31 @@
 mod bindings {
     include!(concat!(env!("OUT_DIR"), "/glucose_bindings.rs"));
 }
-use std::{ffi::c_int, os::raw::c_void, ptr::NonNull};
+use std::{ffi::c_int, ptr::NonNull};
 
 use crate::{
     errors::SolverError,
-    solver::{RawStatus, SatSolver, SatStatus},
+    solver::{RawStatus, SatSolver},
 };
 
 /// `GlucoseSolver` is a wrapper for the [Glucose](https://github.com/audemard/glucose) SimpSolver.
 /// This struct is only available when the `minisat` feature is enabled.
 /// # Example
 /// ```rust
-/// use satgalaxy::solver::{GlucoseSolver, Status,Solver};
+/// use satgalaxy::solver::{GlucoseSolver, SatStatus, SatSolver};
 /// let solver = GlucoseSolver::new();
 ///     solver.add_clause(&vec![1, 2]);
 ///     solver.add_clause(&vec![-1, -2]);
 ///     solver.add_clause(&vec![3]);
 ///
 /// match solver.solve_model() {
-///    Status::Satisfiable(vec) => {
+///    SatStatus::Satisfiable(vec) => {
 ///         println!("Satisfiable solution: {:?}", vec);
 ///     },
-///     Status::Unsatisfiable => {
+///     SatStatus::Unsatisfiable => {
 ///         println!("Unsatisfiable");
 ///     },
-///     Status::Unknown => {
+///     SatStatus::Unknown => {
 ///         println!("Unknown");
 ///     },
 /// }

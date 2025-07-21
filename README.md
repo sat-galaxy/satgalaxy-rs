@@ -31,6 +31,16 @@ By using `satgalaxy-rs`, you get:
 - **Safe Rust API**: Interact with the C solvers through a Rust-idiomatic and memory-safe interface.
 - **Cross-Platform Compatibility**: Inherit the multi-operating system support provided by satgalaxy-core (Linux, macOS, Windows).
 - **Simplified Integration**: No need to manually compile C code; satgalaxy-rs handles the satgalaxy-core dependency during its build process.
+## ✨ Supported Solvers
+Currently, the following SAT solvers are supported：
+
+- Minisat([GitHub](https://github.com/niklasso/minisat))
+- Glucose([4.2.1](http://www.labri.fr/perso/lsimon/glucose/))
+- CaDiCaL([rel-2.1.3](https://github.com/arminbiere/cadical))
+- PicoSAT([960](https://fmv.jku.at/picosat/))
+
+Currently, the following MUS solver are supported：
+- PicoSAT([960](https://fmv.jku.at/picosat/))
 
 ## 🚀 Getting Started
 
@@ -55,7 +65,7 @@ satgalaxy = { version = "0.1.0", features = ["minisat"] }
 
 Here's a quick example demonstrating how to solve a simple SAT problem using `satgalaxy-rs` with the Minisat backend:
 ```rust
-use satgalaxy::{MinisatSolver, Status，SatSolver};
+use satgalaxy::{MinisatSolver, SatStatus，SatSolver};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a new Minisat solver instance
@@ -72,15 +82,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Solve the SAT problem
     println!("Attempting to solve...");
     match solver.solve_model(){ // Pass an empty slice for assumptions
-        Status::Satisfiable(model) => {
+        SatStatus::Satisfiable(model) => {
             println!("SATISFIABLE! 🎉");
             // Retrieve and print the model (variable assignments)
             println!("Model: {:?} ",model);
         },
-        Status::Unsatisfiable => {
+        SatStatus::Unsatisfiable => {
             println!("UNSATISFIABLE! 😞");
         },
-        Status::Unknown => {
+        SatStatus::Unknown => {
             println!("UNKNOWN result. 🤷");
         },
     }
@@ -117,15 +127,15 @@ p cnf 3 2
 
     println!("Solving problem parsed from string:");
     match solver.solve_model(){ // Pass an empty slice for assumptions
-            Status::Satisfiable(model) => {
+            SatStatus::Satisfiable(model) => {
                 println!("SATISFIABLE! 🎉");
                 // Retrieve and print the model (variable assignments)
                 println!("Model: {:?} ",model);
             },
-            Status::Unsatisfiable => {
+            SatStatus::Unsatisfiable => {
                 println!("UNSATISFIABLE! 😞");
             },
-            Status::Unknown => {
+            SatStatus::Unknown => {
                 println!("UNKNOWN result. 🤷");
             },
         }
@@ -139,15 +149,15 @@ p cnf 3 2
 
     println!("\nSolving problem read from reader:");
     match solver.solve_model(){ // Pass an empty slice for assumptions
-        Status::Satisfiable(model) => {
+        SatStatus::Satisfiable(model) => {
             println!("SATISFIABLE! 🎉");
             // Retrieve and print the model (variable assignments)
             println!("Model: {:?} ",model);
         },
-        Status::Unsatisfiable => {
+        SatStatus::Unsatisfiable => {
             println!("UNSATISFIABLE! 😞");
         },
-        Status::Unknown => {
+        SatStatus::Unknown => {
             println!("UNKNOWN result. 🤷");
         },
     }
@@ -178,7 +188,7 @@ You can enable features in your Cargo.toml:
 
 ```toml
 [dependencies]
-satgalaxy = { git="https://github.com/sat-galaxy/satgalaxy-rs.git", features = [
+satgalaxy = { version="0.1.0", features = [
     "minisat",
     "parser",
     "compression",

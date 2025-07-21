@@ -22,28 +22,28 @@ mod bindings {
 }
 use crate::errors::SolverError;
 
-use super::{RawStatus, SatSolver, SatStatus};
-use std::{ffi::{c_int, c_void}, ptr::NonNull};
+use super::{RawStatus, SatSolver};
+use std::{ffi::{c_int}, ptr::NonNull};
 
 /// `MinisatSolver` is a wrapper for the [MiniSat](https://github.com/niklasso/minisat) SimpSolver.
 /// It also allows creating a `Minisat_StdSimpSolver` instance for more low-level operations.
 /// This struct is only available when the `minisat` feature is enabled.
 /// # Example
 /// ```rust
-/// use satgalaxy::solver::{MinisatSolver, Status,Solver};
+/// use satgalaxy::solver::{MinisatSolver, SatStatus, SatSolver};
 /// let solver = MinisatSolver::new();
 ///     solver.add_clause(&vec![1, 2]);
 ///     solver.add_clause(&vec![-1, -2]);
 ///     solver.add_clause(&vec![3]);
 ///
 /// match solver.solve_model() {
-///    Status::Satisfiable(vec) => {
+///    SatStatus::Satisfiable(vec) => {
 ///         println!("Satisfiable solution: {:?}", vec);
 ///     },
-///     Status::Unsatisfiable => {
+///     SatStatus::Unsatisfiable => {
 ///         println!("Unsatisfiable");
 ///     },
-///     Status::Unknown => {
+///     SatStatus::Unknown => {
 ///         println!("Unknown");
 ///     },
 /// }

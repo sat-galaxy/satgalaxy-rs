@@ -1,16 +1,16 @@
-//! The `cadical` module provides access to the `CaDiCaLSolver`.
+//! The `picosat` module provides access to the `PicoSATSolver`.
 //!
-//! This module is enabled when the `minisat` feature is activated.
+//! This module is enabled when the `picosat` feature is activated.
 //!
 //! # Overview
-//! The `CaDiCaLSolver` struct acts as a wrapper for the [CaDiCaL](https://github.com/arminbiere/cadical) Solver, allowing users to
+//! The `PicoSATSolver` struct acts as a wrapper for the [PicoSAT](https://fmv.jku.at/picosat/) Solver, allowing users to
 //! leverage its functionality for solving SAT problems.
 //!
 //! # Usage
-//! To use the `cadical` module, ensure the `cadical` feature is enabled in your `Cargo.toml`:
+//! To use the `picosat` module, ensure the `picosat` feature is enabled in your `Cargo.toml`:
 //! ```toml
 //! [dependencies]
-//! satgalaxy = { version = "x.y.z", features = ["cadical"] }
+//! satgalaxy = { version = "x.y.z", features = ["picosat"] }
 //! ```
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
@@ -25,7 +25,7 @@ use std::{collections::HashSet, fmt::Display, os::raw, ptr::NonNull};
 
 use crate::{errors::SolverError, solver::RawStatus};
 
-use super::{MusSolver, MusStatus, SatSolver, SatStatus};
+use super::{MusSolver, MusStatus, SatSolver};
 
 macro_rules! ffi_bind {
     (
@@ -78,32 +78,31 @@ fn ptr_to_vec<T: Display + PartialEq + std::cmp::PartialEq<i32>>(ptr: *const T) 
 /// This struct is only available when the `picosat` feature is enabled.
 /// # Example
 /// ```rust
-/// use satgalaxy::solver::{CaDiCaLSolver, Status,Solver};
-/// let mut solver = CaDiCaLSolver::new();
+/// use satgalaxy::solver::{PicoSATSolver, SatStatus, SatSolver};
+/// let mut solver = PicoSATSolver::new();
 ///     solver.add_clause(&vec![1, 2]);
 ///     solver.add_clause(&vec![-1, -2]);
 ///     solver.add_clause(&vec![3]);
 ///
 /// match solver.solve() {
-///    Status::SATISFIABLE(vec) => {
+///    SatStatus::Satisfiable(vec) => {
 ///         println!("Satisfiable solution: {:?}", vec);
 ///     },
-///     Status::UNSATISFIABLE => {
+///     SatStatus::Unsatisfiable => {
 ///         println!("Unsatisfiable");
 ///     },
-///     Status::UNKNOWN => {
+///     SatStatus::Unknown => {
 ///         println!("Unknown");
 ///     },
 /// }
 /// ```
 ///  # Usage
-///  To use the `CaDiCaLSolver`, ensure the `cadical` feature is enabled in your `Cargo.toml`:
+///  To use the `PicoSATSolver`, ensure the `picosat` feature is enabled in your `Cargo.toml`:
 ///  ```toml
 ///  [dependencies]
-///  satgalaxy = { version = "x.y.z", features = ["cadical"] }
+///  satgalaxy = { version = "x.y.z", features = ["picosat"] }
 #[derive(Debug, Clone)]
 pub struct PicoSATSolver {
-    // inner:  *mut binding::PicoSATSolver,
     inner: NonNull<binding::PicoSATSolver>,
     clauses: Vec<Vec<i32>>,
     vars: i32,
