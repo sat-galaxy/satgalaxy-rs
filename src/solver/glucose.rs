@@ -20,7 +20,7 @@
 mod bindings {
     include!(concat!(env!("OUT_DIR"), "/glucose_bindings.rs"));
 }
-use std::{ffi::c_int, os::raw::c_void};
+use std::{ffi::c_int, os::raw::c_void, ptr::NonNull};
 
 use crate::{
     errors::SolverError,
@@ -54,7 +54,9 @@ use crate::{
 ///  ```toml
 ///  [dependencies]
 ///  satgalaxy = { version = "x.y.z", features = ["glucose"] }
-pub struct GlucoseSolver(*const c_void);
+pub struct GlucoseSolver{
+    inner: NonNull<bindings::GlucoseSolver>
+}
 unsafe impl Sync for GlucoseSolver {}
 unsafe impl Send for GlucoseSolver {}
 impl Default for GlucoseSolver {
@@ -70,9 +72,21 @@ macro_rules! glucose_opt_set {
     ($name:ident,$ffi_name:ident,$type:ty,$doc:expr) => {
         paste::paste! {
             #[doc=$doc]
-            pub fn [<set_opt_$name>](value: $type) -> Result<(), SolverError> {
+            pub fn [<set_global_opt_$name>](value: $type) -> Result<(), SolverError> {
                 let code = unsafe {
-                     bindings::[<glucose_set_opt_$ffi_name>](value.into())
+                     bindings::[<glucose_set_global_opt_$ffi_name>](value.into())
+                    };
+
+                if code!=0{
+                    return Err(SolverError(Self::error_msg(code)));
+                }
+                Ok(())
+            }
+
+            #[doc=$doc]
+            pub fn [<set_opt_$name>](&mut self, value: $type) -> Result<(), SolverError> {
+                let code = unsafe {
+                     bindings::[<glucose_set_opt_$ffi_name>](self.inner.as_ptr(),value.into())
                     };
 
                 if code!=0{
@@ -83,6 +97,28 @@ macro_rules! glucose_opt_set {
         }
     };
 }
+
+macro_rules! glucose_opt_g_set {
+    ($name:ident,$type:ty,$doc:expr) => {
+        glucose_opt_g_set!($name, $name, $type, $doc);
+    };
+    ($name:ident,$ffi_name:ident,$type:ty,$doc:expr) => {
+        paste::paste! {
+            #[doc=$doc]
+            pub fn [<set_global_opt_$name>](value: $type) -> Result<(), SolverError> {
+                let code = unsafe {
+                     bindings::[<glucose_set_global_opt_$ffi_name>](value.into())
+                    };
+
+                if code!=0{
+                    return Err(SolverError(Self::error_msg(code)));
+                }
+                Ok(())
+            }
+        }
+    };
+}
+
 impl GlucoseSolver {
     fn error_msg(code: i32) -> &'static str {
         unsafe {
@@ -111,13 +147,13 @@ impl GlucoseSolver {
         i32,
         "Increment for reduce DB\n\n# Arguments\n* `value` - must be non-negative"
     );
-    glucose_opt_set!(
+    glucose_opt_g_set!(
         spec_inc_reduce_db,
         i32,
         "Special increment for reduce DB\n\n# Arguments\n* `value` - must be non-negative"
     );
     glucose_opt_set!(lb_lbd_frozen_clause, i32, "Protect clauses if LBD decreases below this\n\n# Arguments\n* `value` - must be non-negative");
-    glucose_opt_set!(chanseok_hack, bool, "Use Chanseok Oh strategy for LBD");
+    glucose_opt_g_set!(chanseok_hack, bool, "Use Chanseok Oh strategy for LBD");
     glucose_opt_set!(
         chanseok_limit,
         i32,
@@ -172,30 +208,30 @@ impl GlucoseSolver {
         f64,
         "Memory waste allowed before GC\n\n# Arguments\n* `value` - must be positive"
     );
-    glucose_opt_set!(glu_reduction, bool, "Glucose reduction strategy");
-    glucose_opt_set!(luby_restart, bool, "Use Luby restart sequence");
-    glucose_opt_set!(
+    glucose_opt_g_set!(glu_reduction, bool, "Glucose reduction strategy");
+    glucose_opt_g_set!(luby_restart, bool, "Use Luby restart sequence");
+    glucose_opt_g_set!(
         restart_inc,
         f64,
         "Restart interval increase factor\n\n# Arguments\n* `value` - must be >= 1.0"
     );
-    glucose_opt_set!(
+    glucose_opt_g_set!(
         luby_restart_factor,
         i32,
         "Luby restart factor\n\n# Arguments\n* `value` - must be positive"
     );
-    glucose_opt_set!(
+    glucose_opt_g_set!(
         randomize_phase_on_restarts,
         i32,
         "Randomization level on restarts (0-3)\n\n# Arguments\n* `value` - must be 0-3"
     );
-    glucose_opt_set!(
+    glucose_opt_g_set!(
         fixed_randomize_phase_on_restarts,
         bool,
         "Fix first 7 levels at random phase"
     );
-    glucose_opt_set!(adapt, bool, "Adapt strategies after 100000 conflicts\n\n# Arguments\n* `value` - boolean (1=true, 0=false)");
-    glucose_opt_set!(forceunsat, bool, "Force phase for UNSAT");
+    glucose_opt_g_set!(adapt, bool, "Adapt strategies after 100000 conflicts\n\n# Arguments\n* `value` - boolean (1=true, 0=false)");
+    glucose_opt_g_set!(forceunsat, bool, "Force phase for UNSAT");
     glucose_opt_set!(use_asymm, bool, "Shrink clauses by asymmetric branching");
     glucose_opt_set!(use_rcheck, bool, "Check if clause is already implied");
     glucose_opt_set!(use_elim, bool, "Perform variable elimination");
@@ -218,36 +254,38 @@ impl GlucoseSolver {
     );
 
     pub fn new() -> Self {
-        unsafe { GlucoseSolver(bindings::glucose_new_solver()) }
+        unsafe { GlucoseSolver{
+            inner:NonNull::new(bindings::glucose_new_solver()).unwrap()
+        } }
     }
 
     pub fn vars(&mut self) -> i32 {
-        unsafe { bindings::glucose_nvars(self.0) }
+        unsafe { bindings::glucose_nvars(self.inner.as_ptr()) }
     }
     pub fn new_var(&mut self) -> i32 {
-        unsafe { bindings::glucose_new_var(self.0) as i32 }
+        unsafe { bindings::glucose_new_var(self.inner.as_ptr()) as i32 }
     }
 
     pub fn add_clause(&mut self, clause: &[i32]) {
         unsafe {
-            bindings::glucose_add_clause(self.0, clause.as_ptr(), clause.len().try_into().unwrap());
+            bindings::glucose_add_clause(self.inner.as_ptr(), clause.as_ptr(), clause.len().try_into().unwrap());
         }
     }
     pub fn add_empty_clause(&mut self) {
         unsafe {
-            bindings::glucose_add_empty_clause(self.0);
+            bindings::glucose_add_empty_clause(self.inner.as_ptr());
         }
     }
     pub fn value(&mut self, var: i32) -> bool {
-        unsafe { bindings::glucose_value(self.0, var as c_int) != 0 }
+        unsafe { bindings::glucose_value(self.inner.as_ptr(), var as c_int) != 0 }
     }
     pub fn model_value(&mut self, var: i32) -> bool {
-        unsafe { bindings::glucose_model_value(self.0, var as c_int) != 0 }
+        unsafe { bindings::glucose_model_value(self.inner.as_ptr(), var as c_int) != 0 }
     }
     pub fn solve_assumps(&mut self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> bool {
         unsafe {
             bindings::glucose_solve_assumps(
-                self.0,
+                self.inner.as_ptr(),
                 assumps.as_ptr(),
                 assumps.len().try_into().unwrap(),
                 do_simp.into(),
@@ -264,7 +302,7 @@ impl GlucoseSolver {
     ) -> RawStatus {
         unsafe {
             match bindings::glucose_solve_limited(
-                self.0,
+                self.inner.as_ptr(),
                 assumps.as_ptr(),
                 assumps.len().try_into().unwrap(),
                 do_simp.into(),
@@ -278,31 +316,25 @@ impl GlucoseSolver {
     }
 
     pub fn solve(&mut self, do_simp: bool, turn_off_simp: bool) -> bool {
-        unsafe { bindings::glucose_solve(self.0, do_simp.into(), turn_off_simp.into()) == 1 }
+        unsafe { bindings::glucose_solve(self.inner.as_ptr(), do_simp.into(), turn_off_simp.into()) == 1 }
     }
     pub fn eliminate(&mut self, turn_off_simp: bool) {
         unsafe {
-            bindings::glucose_eliminate(self.0, turn_off_simp.into());
+            bindings::glucose_eliminate(self.inner.as_ptr(), turn_off_simp.into());
         }
     }
     pub fn assigns(&mut self) -> usize {
-        unsafe { bindings::glucose_nassigns(self.0) as usize }
+        unsafe { bindings::glucose_nassigns(self.inner.as_ptr()) as usize }
     }
     pub fn clauses(&mut self) -> usize {
-        unsafe { bindings::glucose_nclauses(self.0) as usize }
+        unsafe { bindings::glucose_nclauses(self.inner.as_ptr()) as usize }
     }
     pub fn learnts(&mut self) -> usize {
-        unsafe { bindings::glucose_nlearnts(self.0) as usize }
+        unsafe { bindings::glucose_nlearnts(self.inner.as_ptr()) as usize }
     }
 
     pub fn okay(&mut self) -> bool {
-        unsafe { bindings::glucose_okay(self.0) == 1 }
-    }
-
-    pub fn model(&mut self) -> Vec<i32> {
-        (1..self.vars() + 1)
-            .filter(|lit| self.model_value(*lit))
-            .collect()
+        unsafe { bindings::glucose_okay(self.inner.as_ptr()) == 1 }
     }
 }
 
@@ -317,13 +349,15 @@ impl SatSolver for GlucoseSolver {
     }
 
     fn model(&mut self) -> Result<Vec<i32>, SolverError> {
-        Ok(GlucoseSolver::model(self))
+        Ok((1..=self.vars())
+            .filter(|lit| self.model_value(*lit))
+            .collect())
     }
 }
 impl Drop for GlucoseSolver {
     fn drop(&mut self) {
         unsafe {
-            bindings::glucose_destroy(self.0);
+            bindings::glucose_destroy(self.inner.as_ptr());
         }
     }
 }

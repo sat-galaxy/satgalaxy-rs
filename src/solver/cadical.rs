@@ -115,7 +115,7 @@ impl CaDiCaLSolver {
     /// * `length` - Length of the array
     pub fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         unsafe {
-            binding::cadical_add_clause(self.0, clause.as_ptr(), clause.len() as u64);
+            binding::cadical_add_clause(self.0, clause.as_ptr(), clause.len());
         }
         self.error()?;
         Ok(())
@@ -875,30 +875,26 @@ impl CaDiCaLSolver {
     ffi_bind! {
     ///
      cadical_set_opt_walkreleff(walkreleff: i32) -> bool => |v|v!=0; as set_opt_walkreleff }
-
-    pub fn model(&mut self) -> Result<Vec<i32>, SolverError> {
-        let vars = self.vars()?;
-        let mut model = vec![];
-        for lit in 1..vars + 1 {
-            if self.val(lit)? > 0 {
-                model.push(lit);
-            }
-        }
-        Ok(model)
-    }
 }
 
 impl SatSolver for CaDiCaLSolver {
     fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         CaDiCaLSolver::add_clause(self, clause)
     }
-    
-    fn solve(& mut self) -> Result<RawStatus, SolverError> {
+
+    fn solve(&mut self) -> Result<RawStatus, SolverError> {
         CaDiCaLSolver::solve(self)
     }
-    
-    fn model(& mut self) -> Result<Vec<i32>, SolverError> {
-        CaDiCaLSolver::model(self)
+
+    fn model(&mut self) -> Result<Vec<i32>, SolverError> {
+        let vars = self.vars()?;
+        let mut model = vec![];
+        for lit in 1..=vars {
+            if self.val(lit)? > 0 {
+                model.push(lit);
+            }
+        }
+        Ok(model)
     }
 }
 impl Drop for CaDiCaLSolver {
