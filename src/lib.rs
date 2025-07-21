@@ -5,7 +5,7 @@ pub mod parser;
 pub mod solver;
 #[cfg(test)]
 mod tests {
-    use solver::{SatSolver, Status};
+    use solver::{SatSolver, SatStatus};
 
     use super::*;
 
@@ -16,13 +16,13 @@ mod tests {
         solver.add_clause(&vec![1]);
         solver.add_clause(&vec![-1]);
         match solver.solve_model().unwrap() {
-            Status::Satisfiable(_vec) => {
+            SatStatus::Satisfiable(_vec) => {
                 assert_eq!(1, 0);
             }
-            Status::Unsatisfiable => {
+            SatStatus::Unsatisfiable => {
                 assert_eq!(true, true)
             }
-            Status::Unknown => {
+            SatStatus::Unknown => {
                 assert_eq!(10, 0);
             }
         }
@@ -34,13 +34,13 @@ mod tests {
         solver.add_clause(&[1]);
         solver.add_clause(&[-1]);
         match solver.solve_model().unwrap() {
-            Status::Satisfiable(_vec) => {
+            SatStatus::Satisfiable(_vec) => {
                 assert_eq!(1, 0);
             }
-            Status::Unsatisfiable => {
+            SatStatus::Unsatisfiable => {
                 assert_eq!(true, true)
             }
-            Status::Unknown => {
+            SatStatus::Unknown => {
                 assert_eq!(10, 0);
             }
         }
@@ -52,13 +52,13 @@ mod tests {
         solver.add_clause(&[1]);
         solver.add_clause(&[-1]);
         match solver.solve_model().unwrap() {
-            Status::Satisfiable(_vec) => {
+            SatStatus::Satisfiable(_vec) => {
                 assert_eq!(1, 0);
             }
-            Status::Unsatisfiable => {
+            SatStatus::Unsatisfiable => {
                 assert_eq!(true, true)
             }
-            Status::Unknown => {
+            SatStatus::Unknown => {
                 assert_eq!(10, 0);
             }
         }

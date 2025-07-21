@@ -25,7 +25,7 @@ use std::ffi::{c_char, c_int};
 
 use crate::{errors::SolverError, solver::RawStatus};
 
-use super::{SatSolver, Status};
+use super::{SatSolver, SatStatus};
 
 macro_rules! ffi_bind {
     (
@@ -87,7 +87,11 @@ macro_rules! ffi_bind {
 ///  [dependencies]
 ///  satgalaxy = { version = "x.y.z", features = ["cadical"] }
 pub struct CaDiCaLSolver(*mut binding::CaDiCaLSolver);
-
+impl Default for CaDiCaLSolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl CaDiCaLSolver {
     pub fn new() -> Self {
         unsafe { CaDiCaLSolver(binding::cadical_new_solver()) }
@@ -885,18 +889,16 @@ impl CaDiCaLSolver {
 }
 
 impl SatSolver for CaDiCaLSolver {
-    fn solve_model(&mut self) -> Result<Status, SolverError> {
-        let status = self.solve()?;
-
-        return match status {
-            RawStatus::Satisfiable => self.model().map(Status::Satisfiable),
-            RawStatus::Unsatisfiable => Ok(Status::Unsatisfiable),
-            RawStatus::Unknown => Ok(Status::Unknown),
-        };
-    }
-
     fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         CaDiCaLSolver::add_clause(self, clause)
+    }
+    
+    fn solve(& mut self) -> Result<RawStatus, SolverError> {
+        CaDiCaLSolver::solve(self)
+    }
+    
+    fn model(& mut self) -> Result<Vec<i32>, SolverError> {
+        CaDiCaLSolver::model(self)
     }
 }
 impl Drop for CaDiCaLSolver {

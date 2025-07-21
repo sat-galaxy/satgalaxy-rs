@@ -21,13 +21,11 @@ mod binding {
     include!(concat!(env!("OUT_DIR"), "/picosat_bindings.rs"));
 }
 
-use std::{
-    ffi::{c_char, c_int}, fmt::Display, os::raw
-};
+use std::{collections::HashSet, fmt::Display, os::raw, ptr::NonNull};
 
 use crate::{errors::SolverError, solver::RawStatus};
 
-use super::{SatSolver, Status};
+use super::{MusSolver, MusStatus, SatSolver, SatStatus};
 
 macro_rules! ffi_bind {
     (
@@ -38,7 +36,7 @@ macro_rules! ffi_bind {
         $(#[$doc])*
         pub fn $rust_name(&mut self, $($arg: $arg_ty),*) -> Result<$ret, SolverError> {
             unsafe {
-                let ret = binding::$c_name(self.0 $(, $arg.into())*);
+                let ret = binding::$c_name(self.inner.as_ptr() $(, $arg.into())*);
                 self.error()?;
                 Ok(ret.into())
             }
@@ -52,7 +50,7 @@ macro_rules! ffi_bind {
         $(#[$doc])*
         pub fn $rust_name(&mut self, $($arg: $arg_ty),*) -> Result<$ret, SolverError> {
             unsafe {
-                let $raw_var = binding::$c_name(self.0 $(, $arg.into())*);
+                let $raw_var = binding::$c_name(self.inner.as_ptr() $(, $arg.into())*);
                 self.error()?;
                 Ok($convert)
             }
@@ -60,18 +58,16 @@ macro_rules! ffi_bind {
     };
 }
 
-fn ptr_to_vec<T:Display+PartialEq+std::cmp::PartialEq<i32>>(ptr: *const T) -> Vec<T> {
+fn ptr_to_vec<T: Display + PartialEq + std::cmp::PartialEq<i32>>(ptr: *const T) -> Vec<T> {
     let mut vec = Vec::new();
     let mut curr = ptr;
-    let mut v=unsafe {
-    curr.read()
-    };
+    let mut v = unsafe { curr.read() };
 
     while !curr.is_null() && v != 0 {
         unsafe {
             vec.push(v);
-            curr = curr.offset(2);
-            v=curr.read();
+            curr = curr.offset(1);
+            v = curr.read();
         }
     }
     vec
@@ -105,15 +101,31 @@ fn ptr_to_vec<T:Display+PartialEq+std::cmp::PartialEq<i32>>(ptr: *const T) -> Ve
 ///  ```toml
 ///  [dependencies]
 ///  satgalaxy = { version = "x.y.z", features = ["cadical"] }
-pub struct PicoSATSolver(*mut binding::PicoSATSolver);
-
+#[derive(Debug, Clone)]
+pub struct PicoSATSolver {
+    // inner:  *mut binding::PicoSATSolver,
+    inner: NonNull<binding::PicoSATSolver>,
+    clauses: Vec<Vec<i32>>,
+    vars: i32,
+}
+impl Default for PicoSATSolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl PicoSATSolver {
     pub fn new() -> Self {
-        unsafe { PicoSATSolver(binding::picosat_s_init()) }
-    }
-    fn error(&mut self) -> Result<(), SolverError> {
         unsafe {
-            let code = binding::picosat_s_error(self.0);
+            PicoSATSolver {
+                inner: NonNull::new(binding::picosat_s_init()).unwrap(),
+                clauses: Vec::new(),
+                vars: 0,
+            }
+        }
+    }
+    fn error(&self) -> Result<(), SolverError> {
+        unsafe {
+            let code = binding::picosat_s_error(self.inner.as_ptr());
             if code != 0 {
                 let msg = binding::picosat_s_errmsg(code);
                 let msg = std::ffi::CStr::from_ptr(msg);
@@ -126,11 +138,18 @@ impl PicoSATSolver {
     /// Add a clause to the solver.
     ///
     /// # Arguments
-    /// * `ps` - Pointer to an array of literals
-    /// * `length` - Length of the array
-    pub fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
+    /// * `clause` - A reference to a vector of literals representing the clause.
+    fn add_inner_clause(&self, clause: &[i32]) -> Result<(), SolverError> {
         unsafe {
-            binding::picosat_s_add_lits(self.0, clause.as_ptr(), clause.len());
+            binding::picosat_s_add_lits(self.inner.as_ptr(), clause.as_ptr(), clause.len());
+        }
+        self.error()?;
+        Ok(())
+    }
+
+    fn add_inner(&self, lit: i32) -> Result<(), SolverError> {
+        unsafe {
+            binding::picosat_s_add(self.inner.as_ptr(), lit);
         }
         self.error()?;
         Ok(())
@@ -482,7 +501,6 @@ impl PicoSATSolver {
         picosat_s_add (lit: i32) -> i32;
         as add
     }
-
 
     // ffi_bind! {
     //     /// Prints the CNF to a file in DIMACS format
@@ -864,38 +882,162 @@ impl PicoSATSolver {
         /// Exits the PicoSAT solver context.
         picosat_s_leave ()->(); as leave
     }
+
+    fn core_extraction(
+        &mut self,
+        max_rounds: i32,
+        min_rounds: i32,
+        max_non_red_rounds: i32,
+        redundant_indices: &mut HashSet<usize>,
+    ) -> Result<RawStatus, SolverError> {
+        let mut non_red_count = 0;
+        let mut n = self.clauses.len();
+
+        for round in 1..=max_rounds {
+            self.set_seed(round as u32)?;
+
+            // 添加子句
+            for (i, clause) in self.clauses.iter().enumerate() {
+                if redundant_indices.contains(&i) {
+                    self.add_inner_clause(&[1, -1])?;
+                } else {
+                    self.add_inner_clause(clause)?;
+                }
+            }
+
+            let res: RawStatus = self.sat(-1)?;
+            if res == RawStatus::Satisfiable {
+                return Ok(res);
+            }
+            for i in 0..self.clauses.len() {
+                if redundant_indices.contains(&i) {
+                    continue;
+                }
+                if !self.coreclause(i as i32)? {
+                    redundant_indices.insert(i);
+                }
+            }
+            let old_n = n;
+            n = self.clauses.len() - redundant_indices.len();
+            unsafe {
+                binding::picosat_s_reset(self.inner.as_ptr());
+                self.inner = NonNull::new(binding::picosat_s_init()).unwrap();
+            }
+            if round >= min_rounds {
+                let red = old_n - n;
+                if red < 10 && (100 * red + 99) / old_n < 2 {
+                    non_red_count += 1;
+                    if non_red_count > max_non_red_rounds {
+                        break;
+                    }
+                } else {
+                    non_red_count = 0;
+                }
+                if non_red_count > max_non_red_rounds {
+                    break;
+                }
+            }
+            if round < max_rounds {
+                self.enable_trace_generation()?;
+            }
+        }
+
+        Ok(RawStatus::Unsatisfiable)
+    }
 }
 
 impl SatSolver for PicoSATSolver {
-    fn solve_model(&mut self) -> Result<Status, SolverError> {
-        self.enter()?;
-        let status = self.sat(-1)?;
-
-        return match status {
-            RawStatus::Satisfiable => {
-                let mut model = Vec::new();
-                for v in 0..self.variables()? {
-                    let lit = v + 1;
-                    let assum = self.deref(lit)?;
-                    if let Some(true) = assum {
-                        model.push(lit);
-                    }
-                }
-                Ok(Status::Satisfiable(model))
-            }
-            RawStatus::Unsatisfiable => Ok(Status::Unsatisfiable),
-            RawStatus::Unknown => Ok(Status::Unknown),
-        };
+    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
+        self.add_inner_clause(clause)
     }
 
-    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
-        PicoSATSolver::add_clause(self, clause)
+    fn solve(&mut self) -> Result<RawStatus, SolverError> {
+        self.sat(-1)
+    }
+
+    fn model(&mut self) -> Result<Vec<i32>, SolverError> {
+        let mut model = Vec::new();
+        for v in 0..self.variables()? {
+            let lit = v + 1;
+            let assum = self.deref(lit)?;
+            if let Some(true) = assum {
+                model.push(lit);
+            }
+        }
+        Ok(model)
     }
 }
+
+impl MusSolver for PicoSATSolver {
+    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
+        self.vars = clause
+            .iter()
+            .map(|lit| lit.abs())
+            .max()
+            .unwrap_or(0)
+            .max(self.vars);
+        self.clauses.push(clause.to_vec());
+        Ok(())
+    }
+
+    fn solve_mus(&mut self) -> Result<MusStatus, SolverError> {
+        let mut redundant_indices: HashSet<usize> = HashSet::new();
+        if self.enable_trace_generation()? {
+            let res = self.core_extraction(100, 3, 3, &mut redundant_indices)?;
+            if res == RawStatus::Satisfiable {
+                return Ok(MusStatus::Satisfiable);
+            }
+        }
+        let idx: i32 = self.vars + 1;
+        for (i, clause) in self.clauses.iter().enumerate() {
+            if redundant_indices.contains(&i) {
+                continue;
+            }
+            self.add_inner(-(idx + i as i32))?;
+            self.add_inner_clause(&clause)?;
+        }
+
+        for i in 0..self.clauses.len() {
+            if !redundant_indices.contains(&i) {
+                self.assume(idx + i as i32)?;
+            }
+        }
+        let status = self.sat(-1)?;
+        match status {
+            RawStatus::Satisfiable => Ok(MusStatus::Satisfiable),
+            RawStatus::Unsatisfiable => {
+                redundant_indices.extend(0..self.clauses.len());
+                let mut mus = unsafe {
+                    binding::picosat_s_mus_assumptions(
+                        self.inner.as_ptr(),
+                        std::ptr::null_mut(),
+                        None,
+                        1,
+                    )
+                };
+                self.error()?;
+                while !mus.is_null() {
+                    let assumption = unsafe { *mus };
+                    if assumption == 0 {
+                        break;
+                    }
+                    redundant_indices.remove(&((assumption - idx) as usize));
+                    mus = unsafe { mus.offset(1) };
+                }
+                let mus: Vec<usize> = (0..self.clauses.len())
+                    .filter(|i| !redundant_indices.contains(&i))
+                    .collect::<Vec<usize>>();
+                Ok(MusStatus::Unsatisfiable(mus))
+            }
+            RawStatus::Unknown => Ok(MusStatus::Unknown),
+        }
+    }
+}
+
 impl Drop for PicoSATSolver {
     fn drop(&mut self) {
         unsafe {
-            binding::picosat_s_reset(self.0);
+            binding::picosat_s_reset(self.inner.as_ptr());
         }
     }
 }

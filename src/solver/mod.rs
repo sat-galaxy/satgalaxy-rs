@@ -46,20 +46,48 @@ impl From<i32> for RawStatus {
     }
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Status {
+pub enum SatStatus {
     Satisfiable(Vec<i32>),
     Unsatisfiable,
     Unknown,
 }
 
-impl Default for Status {
+impl Default for SatStatus {
     fn default() -> Self {
         Self::Unknown
     }
 }
 
 pub trait SatSolver {
-    fn add_clause(& mut self, clause: &[i32])->Result<(),SolverError>;
+    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError>;
 
-    fn solve_model(& mut self) -> Result<Status,SolverError>;
+    fn solve_model(&mut self) -> Result<SatStatus, SolverError> {
+        let status = self.solve()?;
+        return match status {
+            RawStatus::Satisfiable => self.model().map(SatStatus::Satisfiable),
+            RawStatus::Unsatisfiable => Ok(SatStatus::Unsatisfiable),
+            RawStatus::Unknown => Ok(SatStatus::Unknown),
+        };
+    }
+    fn solve(&mut self) -> Result<RawStatus, SolverError>;
+    fn model(&mut self) -> Result<Vec<i32>, SolverError>;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MusStatus {
+    Satisfiable,
+    Unsatisfiable(Vec<usize>),
+    Unknown,
+}
+
+impl Default for MusStatus {
+    fn default() -> Self {
+        Self::Unknown
+    }
+}
+
+pub trait MusSolver {
+    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError>;
+
+    fn solve_mus(&mut self) -> Result<MusStatus, SolverError>;
 }

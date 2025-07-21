@@ -24,7 +24,7 @@ use std::{ffi::c_int, os::raw::c_void};
 
 use crate::{
     errors::SolverError,
-    solver::{RawStatus, SatSolver, Status},
+    solver::{RawStatus, SatSolver, SatStatus},
 };
 
 /// `GlucoseSolver` is a wrapper for the [Glucose](https://github.com/audemard/glucose) SimpSolver.
@@ -65,9 +65,9 @@ impl Default for GlucoseSolver {
 
 macro_rules! glucose_opt_set {
     ($name:ident,$type:ty,$doc:expr) => {
-        glucose_opt_set!($name,$name,$type,$doc);
+        glucose_opt_set!($name, $name, $type, $doc);
     };
-        ($name:ident,$ffi_name:ident,$type:ty,$doc:expr) => {
+    ($name:ident,$ffi_name:ident,$type:ty,$doc:expr) => {
         paste::paste! {
             #[doc=$doc]
             pub fn [<set_opt_$name>](value: $type) -> Result<(), SolverError> {
@@ -92,48 +92,130 @@ impl GlucoseSolver {
         }
     }
     glucose_opt_set!(
-        k,K,
+        k,
+        K,
         f64,
         "The constant used to force restart.\n value must be in (0, 1)"
     );
-    glucose_opt_set!(r,R, f64, "The constant used to block restart\n\n# Arguments\n* `value` - must be in (0, 5)");
-glucose_opt_set!(size_lbd_queue, i32, "The size of moving average for LBD (restarts)\n\n# Arguments\n* `value` - must be at least 10");
-glucose_opt_set!(size_trail_queue, i32, "The size of moving average for trail (block restarts)\n\n# Arguments\n* `value` - must be at least 10");
-glucose_opt_set!(first_reduce_db, i32, "The number of conflicts before first reduce DB\n\n# Arguments\n* `value` - must be non-negative");
-glucose_opt_set!(inc_reduce_db, i32, "Increment for reduce DB\n\n# Arguments\n* `value` - must be non-negative");
-glucose_opt_set!(spec_inc_reduce_db, i32, "Special increment for reduce DB\n\n# Arguments\n* `value` - must be non-negative");
-glucose_opt_set!(lb_lbd_frozen_clause, i32, "Protect clauses if LBD decreases below this\n\n# Arguments\n* `value` - must be non-negative");
-glucose_opt_set!(chanseok_hack, bool, "Use Chanseok Oh strategy for LBD");
-glucose_opt_set!(chanseok_limit, i32, "Chanseok: permanent clauses with LBD<=limit\n\n# Arguments\n* `value` - must be > 1");
-glucose_opt_set!(lb_size_minimzing_clause, i32, "Min size required to minimize clause\n\n# Arguments\n* `value` - must be >= 3");
-glucose_opt_set!(lb_lbd_minimzing_clause, i32, "Min LBD required to minimize clause\n\n# Arguments\n* `value` - must be >= 3");
-glucose_opt_set!(lcm, bool, "Use inprocessing vivif (ijcai17)");
-glucose_opt_set!(lcm_update_lbd, bool, "Update LBD when doing LCM");
-glucose_opt_set!(var_decay, f64, "Variable activity decay factor\n\n# Arguments\n* `value` - must be in (0, 1)");
-glucose_opt_set!(max_var_decay, f64, "Max variable activity decay factor\n\n# Arguments\n* `value` - must be in (0, 1)");
-glucose_opt_set!(clause_decay, f64, "Clause activity decay factor\n\n# Arguments\n* `value` - must be in (0, 1)");
-glucose_opt_set!(random_var_freq, f64, "Frequency for random variable selection\n\n# Arguments\n* `value` - must be in [0, 1]");
-glucose_opt_set!(random_seed, f64, "Seed for random variable selection\n\n# Arguments\n* `value` - must be positive");
-glucose_opt_set!(ccmin_mode, i32, "Conflict clause minimization (0=none,1=basic,2=deep)\n\n# Arguments\n* `value` - must be 0-2");
-glucose_opt_set!(phase_saving, i32, "Phase saving (0=none,1=basic,2=deep)\n\n# Arguments\n* `value` - must be 0-2");
-glucose_opt_set!(rnd_init_act, bool, "Randomize initial activity\n\n");
-glucose_opt_set!(garbage_frac, f64, "Memory waste allowed before GC\n\n# Arguments\n* `value` - must be positive");
-glucose_opt_set!(glu_reduction, bool, "Glucose reduction strategy");
-glucose_opt_set!(luby_restart, bool, "Use Luby restart sequence");
-glucose_opt_set!(restart_inc, f64, "Restart interval increase factor\n\n# Arguments\n* `value` - must be >= 1.0");
-glucose_opt_set!(luby_restart_factor, i32, "Luby restart factor\n\n# Arguments\n* `value` - must be positive");
-glucose_opt_set!(randomize_phase_on_restarts, i32, "Randomization level on restarts (0-3)\n\n# Arguments\n* `value` - must be 0-3");
-glucose_opt_set!(fixed_randomize_phase_on_restarts, bool, "Fix first 7 levels at random phase");
-glucose_opt_set!(adapt, bool, "Adapt strategies after 100000 conflicts\n\n# Arguments\n* `value` - boolean (1=true, 0=false)");
-glucose_opt_set!(forceunsat, bool, "Force phase for UNSAT");
-glucose_opt_set!(use_asymm, bool, "Shrink clauses by asymmetric branching");
-glucose_opt_set!(use_rcheck, bool, "Check if clause is already implied");
-glucose_opt_set!(use_elim, bool, "Perform variable elimination");
-glucose_opt_set!(grow, i32, "Allow clause growth in elimination\n\n# Arguments\n* `value` - must be an integer");
-glucose_opt_set!(clause_lim, i32, "Max resolvent length for elimination (-1=no limit)\n\n# Arguments\n* `value` - must be -1 or positive");
-glucose_opt_set!(subsumption_lim, i32, "Max clause size for subsumption (-1=no limit)\n\n# Arguments\n* `value` - must be -1 or positive");
-glucose_opt_set!(simp_garbage_frac, f64, "Memory waste allowed during simplification\n\n# Arguments\n* `value` - must be positive");
-glucose_opt_set!(verbosity, i32, "Verbosity level (0=silent,1=some,2=more)\n\n# Arguments\n* `value` - must be 0-2");
+    glucose_opt_set!(
+        r,
+        R,
+        f64,
+        "The constant used to block restart\n\n# Arguments\n* `value` - must be in (0, 5)"
+    );
+    glucose_opt_set!(size_lbd_queue, i32, "The size of moving average for LBD (restarts)\n\n# Arguments\n* `value` - must be at least 10");
+    glucose_opt_set!(size_trail_queue, i32, "The size of moving average for trail (block restarts)\n\n# Arguments\n* `value` - must be at least 10");
+    glucose_opt_set!(first_reduce_db, i32, "The number of conflicts before first reduce DB\n\n# Arguments\n* `value` - must be non-negative");
+    glucose_opt_set!(
+        inc_reduce_db,
+        i32,
+        "Increment for reduce DB\n\n# Arguments\n* `value` - must be non-negative"
+    );
+    glucose_opt_set!(
+        spec_inc_reduce_db,
+        i32,
+        "Special increment for reduce DB\n\n# Arguments\n* `value` - must be non-negative"
+    );
+    glucose_opt_set!(lb_lbd_frozen_clause, i32, "Protect clauses if LBD decreases below this\n\n# Arguments\n* `value` - must be non-negative");
+    glucose_opt_set!(chanseok_hack, bool, "Use Chanseok Oh strategy for LBD");
+    glucose_opt_set!(
+        chanseok_limit,
+        i32,
+        "Chanseok: permanent clauses with LBD<=limit\n\n# Arguments\n* `value` - must be > 1"
+    );
+    glucose_opt_set!(
+        lb_size_minimzing_clause,
+        i32,
+        "Min size required to minimize clause\n\n# Arguments\n* `value` - must be >= 3"
+    );
+    glucose_opt_set!(
+        lb_lbd_minimzing_clause,
+        i32,
+        "Min LBD required to minimize clause\n\n# Arguments\n* `value` - must be >= 3"
+    );
+    glucose_opt_set!(lcm, bool, "Use inprocessing vivif (ijcai17)");
+    glucose_opt_set!(lcm_update_lbd, bool, "Update LBD when doing LCM");
+    glucose_opt_set!(
+        var_decay,
+        f64,
+        "Variable activity decay factor\n\n# Arguments\n* `value` - must be in (0, 1)"
+    );
+    glucose_opt_set!(
+        max_var_decay,
+        f64,
+        "Max variable activity decay factor\n\n# Arguments\n* `value` - must be in (0, 1)"
+    );
+    glucose_opt_set!(
+        clause_decay,
+        f64,
+        "Clause activity decay factor\n\n# Arguments\n* `value` - must be in (0, 1)"
+    );
+    glucose_opt_set!(
+        random_var_freq,
+        f64,
+        "Frequency for random variable selection\n\n# Arguments\n* `value` - must be in [0, 1]"
+    );
+    glucose_opt_set!(
+        random_seed,
+        f64,
+        "Seed for random variable selection\n\n# Arguments\n* `value` - must be positive"
+    );
+    glucose_opt_set!(ccmin_mode, i32, "Conflict clause minimization (0=none,1=basic,2=deep)\n\n# Arguments\n* `value` - must be 0-2");
+    glucose_opt_set!(
+        phase_saving,
+        i32,
+        "Phase saving (0=none,1=basic,2=deep)\n\n# Arguments\n* `value` - must be 0-2"
+    );
+    glucose_opt_set!(rnd_init_act, bool, "Randomize initial activity\n\n");
+    glucose_opt_set!(
+        garbage_frac,
+        f64,
+        "Memory waste allowed before GC\n\n# Arguments\n* `value` - must be positive"
+    );
+    glucose_opt_set!(glu_reduction, bool, "Glucose reduction strategy");
+    glucose_opt_set!(luby_restart, bool, "Use Luby restart sequence");
+    glucose_opt_set!(
+        restart_inc,
+        f64,
+        "Restart interval increase factor\n\n# Arguments\n* `value` - must be >= 1.0"
+    );
+    glucose_opt_set!(
+        luby_restart_factor,
+        i32,
+        "Luby restart factor\n\n# Arguments\n* `value` - must be positive"
+    );
+    glucose_opt_set!(
+        randomize_phase_on_restarts,
+        i32,
+        "Randomization level on restarts (0-3)\n\n# Arguments\n* `value` - must be 0-3"
+    );
+    glucose_opt_set!(
+        fixed_randomize_phase_on_restarts,
+        bool,
+        "Fix first 7 levels at random phase"
+    );
+    glucose_opt_set!(adapt, bool, "Adapt strategies after 100000 conflicts\n\n# Arguments\n* `value` - boolean (1=true, 0=false)");
+    glucose_opt_set!(forceunsat, bool, "Force phase for UNSAT");
+    glucose_opt_set!(use_asymm, bool, "Shrink clauses by asymmetric branching");
+    glucose_opt_set!(use_rcheck, bool, "Check if clause is already implied");
+    glucose_opt_set!(use_elim, bool, "Perform variable elimination");
+    glucose_opt_set!(
+        grow,
+        i32,
+        "Allow clause growth in elimination\n\n# Arguments\n* `value` - must be an integer"
+    );
+    glucose_opt_set!(clause_lim, i32, "Max resolvent length for elimination (-1=no limit)\n\n# Arguments\n* `value` - must be -1 or positive");
+    glucose_opt_set!(subsumption_lim, i32, "Max clause size for subsumption (-1=no limit)\n\n# Arguments\n* `value` - must be -1 or positive");
+    glucose_opt_set!(
+        simp_garbage_frac,
+        f64,
+        "Memory waste allowed during simplification\n\n# Arguments\n* `value` - must be positive"
+    );
+    glucose_opt_set!(
+        verbosity,
+        i32,
+        "Verbosity level (0=silent,1=some,2=more)\n\n# Arguments\n* `value` - must be 0-2"
+    );
 
     pub fn new() -> Self {
         unsafe { GlucoseSolver(bindings::glucose_new_solver()) }
@@ -174,7 +256,12 @@ glucose_opt_set!(verbosity, i32, "Verbosity level (0=silent,1=some,2=more)\n\n# 
         }
     }
 
-    pub fn solve_limited(&mut self, assumps: &[i32], do_simp: bool, turn_off_simp: bool) -> RawStatus {
+    pub fn solve_limited(
+        &mut self,
+        assumps: &[i32],
+        do_simp: bool,
+        turn_off_simp: bool,
+    ) -> RawStatus {
         unsafe {
             match bindings::glucose_solve_limited(
                 self.0,
@@ -220,18 +307,17 @@ glucose_opt_set!(verbosity, i32, "Verbosity level (0=silent,1=some,2=more)\n\n# 
 }
 
 impl SatSolver for GlucoseSolver {
-    fn solve_model(&mut self) -> Result<Status, SolverError> {
-        self.eliminate(true);
-        match self.solve_limited(&[], true, false) {
-            RawStatus::Satisfiable => Ok(Status::Satisfiable(self.model())),
-            RawStatus::Unsatisfiable => Ok(Status::Unsatisfiable),
-            RawStatus::Unknown => Ok(Status::Unknown),
-        }
-    }
-
     fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         GlucoseSolver::add_clause(self, clause);
         Ok(())
+    }
+    fn solve(&mut self) -> Result<RawStatus, SolverError> {
+        self.eliminate(true);
+        Ok(self.solve_limited(&[], true, false))
+    }
+
+    fn model(&mut self) -> Result<Vec<i32>, SolverError> {
+        Ok(GlucoseSolver::model(self))
     }
 }
 impl Drop for GlucoseSolver {
