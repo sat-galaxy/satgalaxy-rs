@@ -63,7 +63,7 @@ satgalaxy = { version = "0.1.0", features = ["minisat"] }
 ```
 ### Basic Usage
 
-Here's a quick example demonstrating how to solve a simple SAT problem using `satgalaxy-rs` with the Minisat backend:
+Here's a quick example showing how to solve a SAT problem using `satgalaxy-rs` with the Minisat backend:
 ```rust
 use satgalaxy::{MinisatSolver, SatStatus，SatSolver};
 
@@ -74,10 +74,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Add clauses. A clause is a disjunction of literals.
     // Example: (var1 OR NOT var2)
-    solver.add_clause(&[var1, -var2])?;
+    solver.push_clause(&[1, -2])?;
 
     // Example: (var2 OR var3)
-    solver.add_clause(&[var2, var3])?;
+    solver.push_clause(&[2, 3])?;
 
     // Solve the SAT problem
     println!("Attempting to solve...");
@@ -168,7 +168,7 @@ The `AsDimacs` trait is key to this parsing flexibility:
 ```rust
 pub trait AsDimacs {
     /// Adds a clause to the underlying structure.
-    fn add_clause(&mut self, clause: Vec<i32>);
+    fn push_clause(&mut self, clause: Vec<i32>)->Result<(),ParserError>;
     /// Adds a comment line. Implementations can choose to store or ignore comments.
     fn add_comment(&mut self, comment: String);
 }

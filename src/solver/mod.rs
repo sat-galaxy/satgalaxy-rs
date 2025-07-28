@@ -61,17 +61,17 @@ impl Default for SatStatus {
 }
 
 pub trait SatSolver {
-    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError>;
+    fn push_clause(&mut self, clause: &[i32]) -> Result<(), SolverError>;
 
     fn solve_model(&mut self) -> Result<SatStatus, SolverError> {
-        let status = self.solve()?;
+        let status = self.solve_sat()?;
         return match status {
             RawStatus::Satisfiable => self.model().map(SatStatus::Satisfiable),
             RawStatus::Unsatisfiable => Ok(SatStatus::Unsatisfiable),
             RawStatus::Unknown => Ok(SatStatus::Unknown),
         };
     }
-    fn solve(&mut self) -> Result<RawStatus, SolverError>;
+    fn solve_sat(&mut self) -> Result<RawStatus, SolverError>;
     fn model(&mut self) -> Result<Vec<i32>, SolverError>;
 }
 
@@ -89,7 +89,7 @@ impl Default for MusStatus {
 }
 
 pub trait MusSolver {
-    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError>;
+    fn push_clause(&mut self, clause: &[i32]) -> Result<(), SolverError>;
 
     fn solve_mus(&mut self) -> Result<MusStatus, SolverError>;
 }

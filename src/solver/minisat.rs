@@ -54,6 +54,7 @@ use std::{ffi::{c_int}, ptr::NonNull};
 ///  [dependencies]
 ///  satgalaxy = { version = "x.y.z", features = ["minisat"] }
 ///
+#[derive(Debug, Clone)]
 pub struct MinisatSolver{
     /// The inner pointer to the Minisat solver instance.
     /// This is a raw pointer to the C++ object, and it should not be used directly.
@@ -284,12 +285,12 @@ impl MinisatSolver {
 }
 
 impl SatSolver for MinisatSolver {
-    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
+    fn push_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         MinisatSolver::add_clause(self, clause);
         Ok(())
     }
 
-    fn solve(&mut self) -> Result<RawStatus, SolverError> {
+    fn solve_sat(&mut self) -> Result<RawStatus, SolverError> {
         self.eliminate(true);
         Ok(self.solve_limited(&[], true, false))
     }

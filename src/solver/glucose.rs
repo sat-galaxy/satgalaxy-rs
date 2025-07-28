@@ -54,6 +54,7 @@ use crate::{
 ///  ```toml
 ///  [dependencies]
 ///  satgalaxy = { version = "x.y.z", features = ["glucose"] }
+#[derive(Debug, Clone)]
 pub struct GlucoseSolver{
     inner: NonNull<bindings::GlucoseSolver>
 }
@@ -339,11 +340,11 @@ impl GlucoseSolver {
 }
 
 impl SatSolver for GlucoseSolver {
-    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
+    fn push_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         GlucoseSolver::add_clause(self, clause);
         Ok(())
     }
-    fn solve(&mut self) -> Result<RawStatus, SolverError> {
+    fn solve_sat(&mut self) -> Result<RawStatus, SolverError> {
         self.eliminate(true);
         Ok(self.solve_limited(&[], true, false))
     }

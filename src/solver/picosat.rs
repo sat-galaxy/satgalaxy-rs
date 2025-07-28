@@ -946,11 +946,11 @@ impl PicoSATSolver {
 }
 
 impl SatSolver for PicoSATSolver {
-    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
+    fn push_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         self.add_inner_clause(clause)
     }
 
-    fn solve(&mut self) -> Result<RawStatus, SolverError> {
+    fn solve_sat(&mut self) -> Result<RawStatus, SolverError> {
         self.sat(-1)
     }
 
@@ -968,7 +968,7 @@ impl SatSolver for PicoSATSolver {
 }
 
 impl MusSolver for PicoSATSolver {
-    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
+    fn push_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         self.vars = clause
             .iter()
             .map(|lit| lit.abs())

@@ -94,7 +94,7 @@ pub fn parse_dimacs_cnf<D: AsDimacs>(
                         clause.push(lit);
                     }
                     num_clauses += 1;
-                    dim.add_clause(clause);
+                    dim.push_clause(clause)?;
                 }
                 Rule::def => {
                     for def_rule in inner_pair.into_inner() {

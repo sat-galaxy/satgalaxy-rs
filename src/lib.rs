@@ -13,8 +13,8 @@ mod tests {
     #[cfg(feature = "cadical")]
     fn cadical() {
         let mut solver = solver::cadical::CaDiCaLSolver::new();
-        solver.add_clause(&vec![1]).unwrap();
-        solver.add_clause(&vec![-1]).unwrap();
+        solver.push_clause(&vec![1]).unwrap();
+        solver.push_clause(&vec![-1]).unwrap();
         match solver.solve_model().unwrap() {
             SatStatus::Satisfiable(_vec) => {
                 assert_eq!(1, 0);
@@ -31,8 +31,8 @@ mod tests {
     #[cfg(feature = "minisat")]
     fn minisat() {
         let mut solver = solver::MinisatSolver::new();
-        solver.add_clause(&[1]);
-        solver.add_clause(&[-1]);
+        solver.push_clause(&[1]).unwrap();
+        solver.push_clause(&[-1]).unwrap();
         match solver.solve_model().unwrap() {
             SatStatus::Satisfiable(_vec) => {
                 assert_eq!(1, 0);
@@ -49,8 +49,8 @@ mod tests {
     #[cfg(feature = "glucose")]
     fn glucose() {
         let mut solver = solver::glucose::GlucoseSolver::new();
-        solver.add_clause(&[1]);
-        solver.add_clause(&[-1]);
+        solver.push_clause(&[1]).unwrap();
+        solver.push_clause(&[-1]).unwrap();
         match solver.solve_model().unwrap() {
             SatStatus::Satisfiable(_vec) => {
                 assert_eq!(1, 0);

@@ -86,6 +86,7 @@ macro_rules! ffi_bind {
 ///  ```toml
 ///  [dependencies]
 ///  satgalaxy = { version = "x.y.z", features = ["cadical"] }
+#[derive(Debug, Clone)]
 pub struct CaDiCaLSolver{
     inner: NonNull<binding::CaDiCaLSolver>,
 }
@@ -880,11 +881,11 @@ impl CaDiCaLSolver {
 }
 
 impl SatSolver for CaDiCaLSolver {
-    fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
+    fn push_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         CaDiCaLSolver::add_clause(self, clause)
     }
 
-    fn solve(&mut self) -> Result<RawStatus, SolverError> {
+    fn solve_sat(&mut self) -> Result<RawStatus, SolverError> {
         CaDiCaLSolver::solve(self)
     }
 

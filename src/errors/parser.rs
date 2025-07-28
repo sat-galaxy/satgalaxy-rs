@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::parser::Rule;
+use crate::{errors::SolverError, parser::Rule};
 
 #[derive(Error, Debug)]
 pub enum ParserError {
@@ -15,4 +15,6 @@ pub enum ParserError {
     TooManyClauses(i32, i32),
     #[error("Failed to parse int: {0}")]
     ParseIntError(#[from] std::num::ParseIntError),
+    #[error("{0}")]
+    SolverError(#[from] SolverError)
 }
