@@ -1,12 +1,27 @@
 use std::env;
+use std::io::ErrorKind;
 use std::path::PathBuf;
+use std::process::Command;
 
-fn binding_satsolver(path: &str, name: &str,defines:Vec<(&str, &str)>) {
+fn binding_satsolver(path: &str, name: &str, defines: Vec<(&str, &str)>) {
     let solver_dir = format!("satgalaxy-core/{}", path);
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     let mut cfg = cmake::Config::new(&solver_dir);
-    defines.iter().for_each(|(k,v)| {cfg.define(k,v);});
+    defines.iter().for_each(|(k, v)| {
+        cfg.define(k, v);
+    });
+
+    let has_ninja = Command::new("ninja")
+        .arg("--version")
+        .output()
+        .err()
+        .map(|e| e.kind() != ErrorKind::NotFound)
+        .unwrap_or(true);
+    if has_ninja {
+        cfg.generator("Ninja");
+    }
+
     let dst = cfg.out_dir(out_path.join(name)).build_target(name).build();
     println!("cargo:rustc-link-search=native={}/build/lib", dst.display());
     println!("cargo:rustc-link-lib=static=satgalaxy_{}", name);
@@ -31,18 +46,18 @@ fn binding_satsolver(path: &str, name: &str,defines:Vec<(&str, &str)>) {
 
 fn binding_glucose(version: &str) {
     let path = format!("glucose-{}", version);
-    binding_satsolver(&path, "glucose",Default::default());
+    binding_satsolver(&path, "glucose", Default::default());
 }
 fn binding_cadical(version: &str) {
-     let path = format!("cadical-rel-{}", version);
-    binding_satsolver(&path, "cadical",Default::default());
+    let path = format!("cadical-rel-{}", version);
+    binding_satsolver(&path, "cadical", Default::default());
 }
 fn binding_minisat() {
-    binding_satsolver("minisat", "minisat",Default::default());
+    binding_satsolver("minisat", "minisat", Default::default());
 }
 fn binding_picosat(version: &str) {
     let path = format!("picosat-{}", version);
-    let mut defines=vec![];
+    let mut defines = vec![];
     if cfg!(feature = "trace") {
         defines.push(("USE_TRACE", "ON"));
     } else {
