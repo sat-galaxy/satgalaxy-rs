@@ -1,81 +1,210 @@
 use std::env;
-use std::io::ErrorKind;
-use std::path::PathBuf;
-use std::process::Command;
+use std::path::{Path, PathBuf};
 
-fn binding_satsolver(path: &str, name: &str, defines: Vec<(&str, &str)>) {
-    let solver_dir = format!("satgalaxy-core/{}", path);
+struct SatBuild<'a> {
+    base_dir: String,
+    name: &'a str,
+    build: cc::Build,
+}
+impl<'a> SatBuild<'a> {
+    fn new(base_dir: &'a str, name: &'a str) -> Self {
+        let real_base_dir=format!("satgalaxy-core/{}",base_dir);
+        let mut build = cc::Build::new();
+        build.warnings(false);
+        build.include(real_base_dir.as_str());
+        build.out_dir(PathBuf::from(env::var("OUT_DIR").unwrap()).join(base_dir));
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let mut cfg = cmake::Config::new(&solver_dir);
-    defines.iter().for_each(|(k, v)| {
-        cfg.define(k, v);
-    });
-
-    let has_ninja = Command::new("ninja")
-        .arg("--version")
-        .output()
-        .err()
-        .map(|e| e.kind() != ErrorKind::NotFound)
-        .unwrap_or(true);
-    if has_ninja {
-        cfg.generator("Ninja");
+        Self {
+            base_dir:real_base_dir,
+            name,
+            build,
+        }
     }
+    fn include(&mut self, dir: &'a str) -> &mut Self {
+        self.build
+            .include(format!("{}/{}", self.base_dir, dir).as_str());
+        self
+    }
+    fn files<P>(&mut self, files: P) -> &mut Self
+    where
+        P: IntoIterator,
+        P::Item: AsRef<Path>,
+    {
+        self.build.files(
+            files
+                .into_iter()
+                .map(|p| format!("{}/{}", self.base_dir, p.as_ref().display())),
+        );
+        self
+    }
+    fn define<'b, V: Into<Option<&'b str>>>(&mut self, var: &str, val: V) -> &mut Self {
+        self.build.define(var, val);
+        self
+    }
+    fn flags(&mut self, flags: &[&str]) -> &mut Self {
+        flags.iter().for_each(|f| {
+            self.build.flag_if_supported(f);
+        });
+        self
+    }
+    fn flag(&mut self, flag: &str) -> &mut Self {
+        self.build.flag_if_supported(flag);
+        self
+    }
+    fn cpp(&mut self, cpp: bool) -> &mut Self {
+        self.build.cpp(cpp);
+        self
+    }
+    fn build(&mut self, header: &str) {
+        self.build
+            .compile(format!("satgalaxy_{}", self.name).as_str());
+        let bindings = bindgen::Builder::default()
+            .headers([format!("{}/{}", self.base_dir, header)])
+            .allowlist_function(format!("{}_.*", self.name))
+            .generate_comments(true)
+            .generate()
+            .expect("Unable to generate bindings");
 
-    let dst = cfg.out_dir(out_path.join(name)).build_target(name).build();
-    println!("cargo:rustc-link-search=native={}/build/lib", dst.display());
-    println!("cargo:rustc-link-lib=static=satgalaxy_{}", name);
-    println!("cargo:rerun-if-changed={}", &solver_dir);
-
-    let bindings = bindgen::Builder::default()
-        .headers([format!(
-            "{}/build/include/satgalaxy/satgalaxy_{}.h",
-            dst.display(),
-            name
-        )])
-        .allowlist_function(format!("{}_.*", name))
-        .generate_comments(true)
-        .generate()
-        .expect("Unable to generate bindings");
-
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join(format!("{}_bindings.rs", name)))
-        .expect("Couldn't write bindings!");
+        let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+        bindings
+            .write_to_file(out_path.join(format!("{}_bindings.rs", self.name)))
+            .expect("Couldn't write bindings!");
+    }
 }
 
 fn binding_glucose(version: &str) {
     let path = format!("glucose-{}", version);
-    binding_satsolver(&path, "glucose", Default::default());
+    let sources = [
+        "utils/Options.cc",
+        "core/Solver.cc",
+        "external/satgalaxy_glucose.cc",
+        "core/lcm.cc",
+        "simp/SimpSolver.cc",
+    ];
+    let mut build = SatBuild::new(&path, "glucose");
+    build
+        .files(sources)
+        .cpp(true)
+        .build("external/satgalaxy_glucose.h");
 }
 fn binding_cadical(version: &str) {
-    let path = format!("cadical-rel-{}", version);
-    binding_satsolver(&path, "cadical", Default::default());
+    let base_dir = format!("cadical-rel-{}", version);
+
+    let sources = [
+        "external/satgalaxy_cadical.cc",
+        "src/solver.cpp",
+        "src/internal.cpp",
+        "src/external.cpp",
+        "src/message.cpp",
+        "src/report.cpp",
+        "src/lookahead.cpp",
+        "src/decompose.cpp",
+        "src/clause.cpp",
+        "src/collect.cpp",
+        "src/propagate.cpp",
+        "src/decide.cpp",
+        "src/var.cpp",
+        "src/proof.cpp",
+        "src/arena.cpp",
+        "src/analyze.cpp",
+        "src/flags.cpp",
+        "src/extend.cpp",
+        "src/external_propagate.cpp",
+        "src/minimize.cpp",
+        "src/shrink.cpp",
+        "src/reap.cpp",
+        "src/solution.cpp",
+        "src/ema.cpp",
+        "src/probe.cpp",
+        "src/deduplicate.cpp",
+        "src/ternary.cpp",
+        "src/watch.cpp",
+        "src/config.cpp",
+        "src/contract.cpp",
+        "src/options.cpp",
+        "src/version.cpp",
+        "src/limit.cpp",
+        "src/assume.cpp",
+        "src/constrain.cpp",
+        "src/lratbuilder.cpp",
+        "src/stats.cpp",
+        "src/queue.cpp",
+        "src/score.cpp",
+        "src/backtrack.cpp",
+        "src/restart.cpp",
+        "src/elim.cpp",
+        "src/subsume.cpp",
+        "src/instantiate.cpp",
+        "src/flip.cpp",
+        "src/rephase.cpp",
+        "src/backward.cpp",
+        "src/condition.cpp",
+        "src/averages.cpp",
+        "src/gates.cpp",
+        "src/block.cpp",
+        "src/phases.cpp",
+        "src/reduce.cpp",
+        "src/compact.cpp",
+        "src/walk.cpp",
+        "src/lucky.cpp",
+        "src/util.cpp",
+        "src/restore.cpp",
+        "src/checker.cpp",
+        "src/occs.cpp",
+        "src/cover.cpp",
+        "src/bins.cpp",
+        "src/vivify.cpp",
+        "src/transred.cpp",
+        "src/lratchecker.cpp",
+    ];
+
+    SatBuild::new(base_dir.as_str(), "cadical")
+        .files(sources)
+        .include("src")
+        .cpp(true)
+        .define("QUIET", None)
+        .define("GALAXY_CORE", None)
+        .define("VERSION", format!("\"{}\"", version).as_str())
+        .flag("-Wno-error=date-time")
+        .build("external/satgalaxy_cadical.h");
 }
 fn binding_minisat() {
-    binding_satsolver("minisat", "minisat", Default::default());
+    let path = "minisat";
+    let sources = [
+        "minisat/utils/Options.cc",
+        "minisat/core/Solver.cc",
+        "minisat/external/satgalaxy_minisat.cc",
+        "minisat/simp/SimpSolver.cc",
+    ];
+    SatBuild::new(path, "minisat")
+        .files(sources)
+        .cpp(true)
+        .define("__STDC_FORMAT_MACROS", None)
+        .define("__STDC_LIMIT_MACROS", None)
+        .build("minisat/external/satgalaxy_minisat.h");
 }
 fn binding_picosat(version: &str) {
     let path = format!("picosat-{}", version);
-    let mut defines = vec![];
+    let sources = ["picosat.c", "external/satgalaxy_picosat.c"];
+    let mut build = SatBuild::new(path.as_str(), "picosat");
+    build.files(sources).cpp(false).define("NGETRUSAGE", None);
     if cfg!(feature = "trace") {
-        defines.push(("USE_TRACE", "ON"));
-    } else {
-        defines.push(("USE_TRACE", "OFF"));
+        build.define("TRACE", None);
     }
-    binding_satsolver(&path, "picosat", defines);
+    build.build("external/satgalaxy_picosat.h");
 }
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     if cfg!(feature = "cadical") {
         binding_cadical("2.1.3");
     }
-    if cfg!(feature = "minisat") {
-        binding_minisat();
-    }
     if cfg!(feature = "glucose") {
         binding_glucose("4.2.1");
     }
+    if cfg!(feature = "minisat") {
+        binding_minisat();
+    }
+
     if cfg!(feature = "picosat") {
         binding_picosat("960");
     }
