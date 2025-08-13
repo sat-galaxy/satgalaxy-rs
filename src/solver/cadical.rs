@@ -18,7 +18,7 @@
 #![allow(dead_code)]
 
 mod binding {
-    include!(concat!(env!("OUT_DIR"), "/cadical_bindings.rs"));
+    include!("../../bindings/cadical_bindings.rs");
 }
 
 use std::{ffi::c_char, ptr::NonNull};

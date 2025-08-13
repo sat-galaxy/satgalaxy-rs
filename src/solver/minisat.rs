@@ -18,7 +18,7 @@
 #![allow(dead_code)]
 
 mod bindings {
-    include!(concat!(env!("OUT_DIR"), "/minisat_bindings.rs"));
+    include!("../../bindings/minisat_bindings.rs");
 }
 use crate::errors::SolverError;
 

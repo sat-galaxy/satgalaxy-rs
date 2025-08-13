@@ -18,7 +18,7 @@
 #![allow(dead_code)]
 
 mod binding {
-    include!(concat!(env!("OUT_DIR"), "/picosat_bindings.rs"));
+     include!("../../bindings/picosat_bindings.rs");
 }
 
 use std::{collections::HashSet, fmt::Display, os::raw, ptr::NonNull};

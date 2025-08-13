@@ -58,17 +58,17 @@ impl<'a> SatBuild<'a> {
     fn build(&mut self, header: &str) {
         self.build
             .compile(format!("satgalaxy_{}", self.name).as_str());
-        let bindings = bindgen::Builder::default()
-            .headers([format!("{}/{}", self.base_dir, header)])
-            .allowlist_function(format!("{}_.*", self.name))
-            .generate_comments(true)
-            .generate()
-            .expect("Unable to generate bindings");
+        // let bindings = bindgen::Builder::default()
+        //     .headers([format!("{}/{}", self.base_dir, header)])
+        //     .allowlist_function(format!("{}_.*", self.name))
+        //     .generate_comments(true)
+        //     .generate()
+        //     .expect("Unable to generate bindings");
 
-        let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-        bindings
-            .write_to_file(out_path.join(format!("{}_bindings.rs", self.name)))
-            .expect("Couldn't write bindings!");
+        // let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+        // bindings
+        //     .write_to_file(out_path.join(format!("{}_bindings.rs", self.name)))
+        //     .expect("Couldn't write bindings!");
     }
 }
 
