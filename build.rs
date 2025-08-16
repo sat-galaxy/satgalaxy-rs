@@ -164,6 +164,7 @@ fn binding_cadical(version: &str) {
         .cpp(true)
         .define("QUIET", None)
         .define("GALAXY_CORE", None)
+        .define("NTRACING", None)
         .define("VERSION", format!("\"{}\"", version).as_str())
         .flag("-Wno-error=date-time")
         .build("external/satgalaxy_cadical.h");

@@ -10,7 +10,10 @@ pub use glucose::GlucoseSolver;
 pub mod minisat;
 #[cfg(feature = "minisat")]
 pub use minisat::MinisatSolver;
+#[cfg(feature = "picosat")]
 pub mod picosat;
+#[cfg(feature = "picosat")]
+pub use picosat::PicoSATSolver;
 
 use crate::errors::SolverError;
 
