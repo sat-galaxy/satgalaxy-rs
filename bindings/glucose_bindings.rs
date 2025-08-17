@@ -10,7 +10,7 @@ extern "C" {
     pub fn glucose_error_msg(code: ::std::os::raw::c_int) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    pub fn glucose_error( arg1: *mut GlucoseSolver) -> ::std::os::raw::c_int;
+    pub fn glucose_error(arg1: *mut GlucoseSolver) -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[doc = " @brief The constant used to force restart\n @param value must be in (0, 1)\n @return error code"]
@@ -417,7 +417,7 @@ extern "C" {
     pub fn glucose_add_clause(
         solver: *mut GlucoseSolver,
         ps: *const ::std::os::raw::c_int,
-        length: ::std::os::raw::c_ulong,
+        length: usize,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -443,7 +443,7 @@ extern "C" {
     pub fn glucose_solve_assumps(
         solver: *mut GlucoseSolver,
         assumps: *const ::std::os::raw::c_int,
-        length: ::std::os::raw::c_ulong,
+        length: usize,
         do_simp: ::std::os::raw::c_int,
         turn_off_simp: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
@@ -453,7 +453,7 @@ extern "C" {
     pub fn glucose_solve_limited(
         solver: *mut GlucoseSolver,
         assumps: *const ::std::os::raw::c_int,
-        length: ::std::os::raw::c_ulong,
+        length: usize,
         do_simp: ::std::os::raw::c_int,
         turn_off_simp: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;

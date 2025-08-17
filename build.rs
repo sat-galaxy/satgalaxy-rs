@@ -8,14 +8,14 @@ struct SatBuild<'a> {
 }
 impl<'a> SatBuild<'a> {
     fn new(base_dir: &'a str, name: &'a str) -> Self {
-        let real_base_dir=format!("satgalaxy-core/{}",base_dir);
+        let real_base_dir = format!("satgalaxy-core/{}", base_dir);
         let mut build = cc::Build::new();
         build.warnings(false);
         build.include(real_base_dir.as_str());
         build.out_dir(PathBuf::from(env::var("OUT_DIR").unwrap()).join(base_dir));
 
         Self {
-            base_dir:real_base_dir,
+            base_dir: real_base_dir,
             name,
             build,
         }

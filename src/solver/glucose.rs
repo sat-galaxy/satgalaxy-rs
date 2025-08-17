@@ -311,7 +311,7 @@ impl GlucoseSolver {
     /// Add a clause to the solver.
     pub fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         unsafe {
-            bindings::glucose_add_clause(self.inner.as_ptr(), clause.as_ptr(), clause.len() as u64);
+            bindings::glucose_add_clause(self.inner.as_ptr(), clause.as_ptr(), clause.len());
         }
         self.error()?;
         Ok(())
@@ -340,7 +340,7 @@ impl GlucoseSolver {
     pub fn solve_assumps(&mut self, clause: &[i32],do_simp: bool,
         turn_off_simp: bool) -> Result<RawStatus, SolverError> {
         let status= unsafe {
-            bindings::glucose_solve_assumps(self.inner.as_ptr(), clause.as_ptr(), clause.len() as u64,do_simp.into(),turn_off_simp.into())
+            bindings::glucose_solve_assumps(self.inner.as_ptr(), clause.as_ptr(), clause.len(),do_simp.into(),turn_off_simp.into())
         }.into();
         self.error()?;
         Ok(status)
@@ -349,7 +349,7 @@ impl GlucoseSolver {
     pub fn solve_limited(&mut self, clause: &[i32],do_simp: bool,
         turn_off_simp: bool) -> Result<RawStatus, SolverError> {
         let status= unsafe {
-            bindings::glucose_solve_limited(self.inner.as_ptr(), clause.as_ptr(), clause.len() as u64,do_simp.into(),turn_off_simp.into())
+            bindings::glucose_solve_limited(self.inner.as_ptr(), clause.as_ptr(), clause.len(),do_simp.into(),turn_off_simp.into())
         }.into();
         self.error()?;
         Ok(status)
@@ -359,7 +359,7 @@ impl GlucoseSolver {
     pub fn glucose_solve_limited(&mut self, clause: &[i32],do_simp: bool,
         turn_off_simp: bool) -> Result<RawStatus, SolverError> {
         let status= unsafe {
-            bindings::glucose_solve_limited(self.inner.as_ptr(), clause.as_ptr(), clause.len() as u64,do_simp.into(),turn_off_simp.into())
+            bindings::glucose_solve_limited(self.inner.as_ptr(), clause.as_ptr(), clause.len(),do_simp.into(),turn_off_simp.into())
         }.into();
         self.error()?;
         Ok(status)
