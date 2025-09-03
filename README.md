@@ -50,8 +50,6 @@ To use `satgalaxy-rs`, you'll need:
 
 - **Rust Toolchain**: Install Rust via rustup (https://rustup.rs/).
 
-- **CMake**: `satgalaxy-core` uses CMake for its build system, so ensure it's installed on your system.
-
 - **C/C++ Compiler**: A C/C++ compiler (like GCC, Clang, MSVC) compatible with your system is required to compile satgalaxy-core.
 
 ### Installation
@@ -59,17 +57,17 @@ To use `satgalaxy-rs`, you'll need:
 Add `satgalaxy-rs` to your Cargo.toml dependencies:
 ```toml
 [dependencies]
-satgalaxy = { version = "0.1.0", features = ["minisat"] }
+satgalaxy = { version = "0.2.0", features = ["minisat"] }
 ```
 ### Basic Usage
 
 Here's a quick example showing how to solve a SAT problem using `satgalaxy-rs` with the Minisat backend:
 ```rust
-use satgalaxy::{MinisatSolver, SatStatus，SatSolver};
+use satgalaxy::{MinisatSolver, SatStatus,SatSolver};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a new Minisat solver instance
-    let mut solver = MinisatSolver::new()?;
+    let mut solver = MinisatSolver::new();
 
 
     // Add clauses. A clause is a disjunction of literals.
@@ -81,7 +79,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Solve the SAT problem
     println!("Attempting to solve...");
-    match solver.solve_model(){ // Pass an empty slice for assumptions
+    match solver.solve_model().unwrap(){ // Pass an empty slice for assumptions
         SatStatus::Satisfiable(model) => {
             println!("SATISFIABLE! 🎉");
             // Retrieve and print the model (variable assignments)
@@ -110,9 +108,10 @@ satgalaxy = { git="https://github.com/sat-galaxy/satgalaxy-rs.git", features = [
 ```
 Then, you can use read_dimacs_from_reader or parse_dimacs_cnf (if you have the content as a string) to load a problem:
 ```rust
-use satgalaxy::MinisatSolver;
+use satgalaxy::{MinisatSolver,SatSolver};
 use satgalaxy::parser::{parse_dimacs_cnf, read_dimacs_from_reader, AsDimacs};
-
+use satgalaxy::solver::SatStatus;
+use std::fs::File;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 1: Parsing from a string literal
     let dimacs_content = "c This is a comment about the problem
@@ -121,12 +120,12 @@ p cnf 3 2
 2 3 0
 ";
 
-    let mut solver = MinisatSolver::new()?;
+    let mut solver = MinisatSolver::new();
     // `parse_dimacs_cnf` takes a mutable reference to an `AsDimacs` implementor.
-    parse_dimacs_cnf(dimacs_content, false, &mut solver)?;
+    parse_dimacs_cnf(dimacs_content, false, &mut solver).unwrap();
 
     println!("Solving problem parsed from string:");
-    match solver.solve_model(){ // Pass an empty slice for assumptions
+    match solver.solve_model().unwrap(){ // Pass an empty slice for assumptions
             SatStatus::Satisfiable(model) => {
                 println!("SATISFIABLE! 🎉");
                 // Retrieve and print the model (variable assignments)
@@ -142,13 +141,13 @@ p cnf 3 2
 
     // Example 2: Reading from a reader (e.g., a file, or in this case, an in-memory buffer)
     let mut file = File::open("path/to/dimacs_file.cnf").unwrap();
-    let mut solver = MinisatSolver::new()?;
+    let mut solver = MinisatSolver::new();
 
     // `read_dimacs_from_reader` also takes a mutable reference to an `AsDimacs` implementor.
-    read_dimacs_from_reader(&mut file, &mut solver)?;
+    read_dimacs_from_reader(&mut file,false, &mut solver).unwrap();
 
     println!("\nSolving problem read from reader:");
-    match solver.solve_model(){ // Pass an empty slice for assumptions
+    match solver.solve_model().unwrap(){ // Pass an empty slice for assumptions
         SatStatus::Satisfiable(model) => {
             println!("SATISFIABLE! 🎉");
             // Retrieve and print the model (variable assignments)
@@ -166,6 +165,7 @@ p cnf 3 2
 ```
 The `AsDimacs` trait is key to this parsing flexibility:
 ```rust
+use satgalaxy::errors::ParserError;
 pub trait AsDimacs {
     /// Adds a clause to the underlying structure.
     fn push_clause(&mut self, clause: Vec<i32>)->Result<(),ParserError>;
@@ -188,7 +188,7 @@ You can enable features in your Cargo.toml:
 
 ```toml
 [dependencies]
-satgalaxy = { version="0.1.0", features = [
+satgalaxy = { version="0.2.0", features = [
     "minisat",
     "parser",
     "compression",

@@ -25,7 +25,7 @@ use std::{ffi::c_char, ptr::NonNull};
 
 use crate::{errors::SolverError, solver::RawStatus};
 
-use super::{SatSolver};
+use super::SatSolver;
 
 macro_rules! ffi_bind {
     (
@@ -69,7 +69,7 @@ macro_rules! ffi_bind {
 ///     solver.add_clause(&vec![-1, -2]);
 ///     solver.add_clause(&vec![3]);
 ///
-/// match solver.solve() {
+/// match solver.solve_model().unwrap() {
 ///    SatStatus::Satisfiable(vec) => {
 ///         println!("Satisfiable solution: {:?}", vec);
 ///     },
@@ -87,7 +87,7 @@ macro_rules! ffi_bind {
 ///  [dependencies]
 ///  satgalaxy = { version = "x.y.z", features = ["cadical"] }
 #[derive(Debug, Clone)]
-pub struct CaDiCaLSolver{
+pub struct CaDiCaLSolver {
     inner: NonNull<binding::CaDiCaLSolver>,
 }
 impl Default for CaDiCaLSolver {
@@ -97,7 +97,11 @@ impl Default for CaDiCaLSolver {
 }
 impl CaDiCaLSolver {
     pub fn new() -> Self {
-        unsafe { CaDiCaLSolver { inner: NonNull::new(binding::cadical_new_solver()).unwrap() } }
+        unsafe {
+            CaDiCaLSolver {
+                inner: NonNull::new(binding::cadical_new_solver()).unwrap(),
+            }
+        }
     }
     fn error(&mut self) -> Result<(), SolverError> {
         unsafe {
@@ -905,5 +909,31 @@ impl Drop for CaDiCaLSolver {
         unsafe {
             binding::cadical_destroy(self.inner.as_ptr());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::solver::SatStatus;
+
+    use super::*;
+    #[test]
+    fn unsat() {
+        let mut solver = CaDiCaLSolver::new();
+        solver.push_clause(&vec![1]).unwrap();
+        solver.push_clause(&vec![-1]).unwrap();
+        assert!(matches!(
+            solver.solve_model().unwrap(),
+            SatStatus::Unsatisfiable
+        ));
+    }
+    #[test]
+    fn sat() {
+        let mut solver = CaDiCaLSolver::new();
+        solver.push_clause(&vec![1, 2]).unwrap();
+        solver.push_clause(&vec![-1]).unwrap();
+        assert!(
+            matches!(solver.solve_model().unwrap(),SatStatus::Satisfiable(x) if x.eq(&vec![2]))
+        );
     }
 }

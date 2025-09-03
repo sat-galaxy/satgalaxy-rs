@@ -20,7 +20,7 @@
 mod bindings {
     include!("../../bindings/glucose_bindings.rs");
 }
-use std::{ffi::c_int, ptr::NonNull};
+use std::ptr::NonNull;
 
 use crate::{
     errors::SolverError,
@@ -32,12 +32,12 @@ use crate::{
 /// # Example
 /// ```rust
 /// use satgalaxy::solver::{GlucoseSolver, SatStatus, SatSolver};
-/// let solver = GlucoseSolver::new();
+/// let mut solver = GlucoseSolver::new();
 ///     solver.add_clause(&vec![1, 2]);
 ///     solver.add_clause(&vec![-1, -2]);
 ///     solver.add_clause(&vec![3]);
 ///
-/// match solver.solve_model() {
+/// match solver.solve_model().unwrap() {
 ///    SatStatus::Satisfiable(vec) => {
 ///         println!("Satisfiable solution: {:?}", vec);
 ///     },
@@ -307,7 +307,6 @@ impl GlucoseSolver {
         as new_var
     }
 
-
     /// Add a clause to the solver.
     pub fn add_clause(&mut self, clause: &[i32]) -> Result<(), SolverError> {
         unsafe {
@@ -334,33 +333,64 @@ impl GlucoseSolver {
         as model_value
     }
 
-
-
-/// Solve the problem with assumptions.
-    pub fn solve_assumps(&mut self, clause: &[i32],do_simp: bool,
-        turn_off_simp: bool) -> Result<RawStatus, SolverError> {
-        let status= unsafe {
-            bindings::glucose_solve_assumps(self.inner.as_ptr(), clause.as_ptr(), clause.len(),do_simp.into(),turn_off_simp.into())
-        }.into();
+    /// Solve the problem with assumptions.
+    pub fn solve_assumps(
+        &mut self,
+        clause: &[i32],
+        do_simp: bool,
+        turn_off_simp: bool,
+    ) -> Result<RawStatus, SolverError> {
+        let status = unsafe {
+            bindings::glucose_solve_assumps(
+                self.inner.as_ptr(),
+                clause.as_ptr(),
+                clause.len(),
+                do_simp.into(),
+                turn_off_simp.into(),
+            )
+        }
+        .into();
         self.error()?;
         Ok(status)
     }
-/// Solve the problem with limited.
-    pub fn solve_limited(&mut self, clause: &[i32],do_simp: bool,
-        turn_off_simp: bool) -> Result<RawStatus, SolverError> {
-        let status= unsafe {
-            bindings::glucose_solve_limited(self.inner.as_ptr(), clause.as_ptr(), clause.len(),do_simp.into(),turn_off_simp.into())
-        }.into();
+    /// Solve the problem with limited.
+    pub fn solve_limited(
+        &mut self,
+        clause: &[i32],
+        do_simp: bool,
+        turn_off_simp: bool,
+    ) -> Result<RawStatus, SolverError> {
+        let status = unsafe {
+            bindings::glucose_solve_limited(
+                self.inner.as_ptr(),
+                clause.as_ptr(),
+                clause.len(),
+                do_simp.into(),
+                turn_off_simp.into(),
+            )
+        }
+        .into();
         self.error()?;
         Ok(status)
     }
-        /// Solve the problem with limited.
+    /// Solve the problem with limited.
 
-    pub fn glucose_solve_limited(&mut self, clause: &[i32],do_simp: bool,
-        turn_off_simp: bool) -> Result<RawStatus, SolverError> {
-        let status= unsafe {
-            bindings::glucose_solve_limited(self.inner.as_ptr(), clause.as_ptr(), clause.len(),do_simp.into(),turn_off_simp.into())
-        }.into();
+    pub fn glucose_solve_limited(
+        &mut self,
+        clause: &[i32],
+        do_simp: bool,
+        turn_off_simp: bool,
+    ) -> Result<RawStatus, SolverError> {
+        let status = unsafe {
+            bindings::glucose_solve_limited(
+                self.inner.as_ptr(),
+                clause.as_ptr(),
+                clause.len(),
+                do_simp.into(),
+                turn_off_simp.into(),
+            )
+        }
+        .into();
         self.error()?;
         Ok(status)
     }
@@ -426,17 +456,15 @@ impl SatSolver for GlucoseSolver {
         Ok(())
     }
     fn solve_sat(&mut self) -> Result<RawStatus, SolverError> {
-        self.eliminate(true);
+        self.eliminate(true)?;
         self.solve_limited(&[], true, false)
     }
 
     fn model(&mut self) -> Result<Vec<i32>, SolverError> {
-       let mut model =vec![];
+        let mut model = vec![];
         for lit in 1..=self.nvars()? {
             if self.model_value(lit)? {
                 model.push(lit);
-            } else {
-                model.push(-lit);
             }
         }
         Ok(model)
@@ -447,5 +475,31 @@ impl Drop for GlucoseSolver {
         unsafe {
             bindings::glucose_destroy(self.inner.as_ptr());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::solver::SatStatus;
+
+    use super::*;
+    #[test]
+    fn unsat() {
+        let mut solver = GlucoseSolver::new();
+        solver.push_clause(&vec![1]).unwrap();
+        solver.push_clause(&vec![-1]).unwrap();
+        assert!(matches!(
+            solver.solve_model().unwrap(),
+            SatStatus::Unsatisfiable
+        ));
+    }
+    #[test]
+    fn sat() {
+        let mut solver = GlucoseSolver::new();
+        solver.push_clause(&vec![1, 2]).unwrap();
+        solver.push_clause(&vec![-1]).unwrap();
+        assert!(
+            matches!(solver.solve_model().unwrap(),SatStatus::Satisfiable(x) if x.eq(&vec![2]))
+        );
     }
 }

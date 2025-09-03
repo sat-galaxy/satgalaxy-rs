@@ -23,7 +23,7 @@ mod bindings {
 use crate::errors::SolverError;
 
 use super::{RawStatus, SatSolver};
-use std::{ffi::{c_int}, ptr::NonNull};
+use std::{ffi::c_int, ptr::NonNull};
 
 /// `MinisatSolver` is a wrapper for the [MiniSat](https://github.com/niklasso/minisat) SimpSolver.
 /// It also allows creating a `Minisat_StdSimpSolver` instance for more low-level operations.
@@ -31,12 +31,12 @@ use std::{ffi::{c_int}, ptr::NonNull};
 /// # Example
 /// ```rust
 /// use satgalaxy::solver::{MinisatSolver, SatStatus, SatSolver};
-/// let solver = MinisatSolver::new();
+/// let mut solver = MinisatSolver::new();
 ///     solver.add_clause(&vec![1, 2]);
 ///     solver.add_clause(&vec![-1, -2]);
 ///     solver.add_clause(&vec![3]);
 ///
-/// match solver.solve_model() {
+/// match solver.solve_model().unwrap() {
 ///    SatStatus::Satisfiable(vec) => {
 ///         println!("Satisfiable solution: {:?}", vec);
 ///     },
@@ -55,13 +55,12 @@ use std::{ffi::{c_int}, ptr::NonNull};
 ///  satgalaxy = { version = "x.y.z", features = ["minisat"] }
 ///
 #[derive(Debug, Clone)]
-pub struct MinisatSolver{
+pub struct MinisatSolver {
     /// The inner pointer to the Minisat solver instance.
     /// This is a raw pointer to the C++ object, and it should not be used directly.
     /// Use the methods provided by `MinisatSolver` instead.
-    inner:NonNull<bindings::MiniSATSolver>,
+    inner: NonNull<bindings::MiniSATSolver>,
 }
-
 
 impl Default for MinisatSolver {
     fn default() -> Self {
@@ -188,9 +187,11 @@ impl MinisatSolver {
 
     /// create a new solver
     pub fn new() -> Self {
-        unsafe { MinisatSolver{
-            inner: NonNull::new(bindings::minisat_new_solver()).unwrap()
-        } }
+        unsafe {
+            MinisatSolver {
+                inner: NonNull::new(bindings::minisat_new_solver()).unwrap(),
+            }
+        }
     }
     /// The current number of variables.
     pub fn vars(&mut self) -> i32 {
@@ -258,7 +259,9 @@ impl MinisatSolver {
     }
     /// Solving, do_simp (recommend true) and turn_off_simp (recommend false)
     pub fn solve(&mut self, do_simp: bool, turn_off_simp: bool) -> bool {
-        unsafe { bindings::minisat_solve(self.inner.as_ptr(), do_simp.into(), turn_off_simp.into()) == 1 }
+        unsafe {
+            bindings::minisat_solve(self.inner.as_ptr(), do_simp.into(), turn_off_simp.into()) == 1
+        }
     }
     /// Perform variable elimination based simplification. turn_off_simp (recommend false)
     pub fn eliminate(&mut self, turn_off_simp: bool) {
@@ -291,12 +294,12 @@ impl SatSolver for MinisatSolver {
     }
 
     fn solve_sat(&mut self) -> Result<RawStatus, SolverError> {
-        self.eliminate(true);
+        self.eliminate(false);
         Ok(self.solve_limited(&[], true, false))
     }
 
     fn model(&mut self) -> Result<Vec<i32>, SolverError> {
-        Ok((1..self.vars() + 1)
+        Ok((1..=self.vars())
             .filter(|lit| self.model_value(*lit))
             .collect())
     }
@@ -306,5 +309,31 @@ impl Drop for MinisatSolver {
         unsafe {
             bindings::minisat_destroy(self.inner.as_ptr());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::solver::SatStatus;
+
+    use super::*;
+    #[test]
+    fn unsat() {
+        let mut solver = MinisatSolver::new();
+        solver.push_clause(&vec![1]).unwrap();
+        solver.push_clause(&vec![-1]).unwrap();
+        assert!(matches!(
+            solver.solve_model().unwrap(),
+            SatStatus::Unsatisfiable
+        ));
+    }
+    #[test]
+    fn sat() {
+        let mut solver = MinisatSolver::new();
+        solver.push_clause(&vec![1, 2]).unwrap();
+        solver.push_clause(&vec![-1]).unwrap();
+        assert!(
+            matches!(solver.solve_model().unwrap(),SatStatus::Satisfiable(x) if x.eq(&vec![2]))
+        );
     }
 }

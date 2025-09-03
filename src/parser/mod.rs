@@ -67,3 +67,33 @@ impl AsDimacs for Problem {
     }
     fn add_comment(&mut self, _comment: String) {}
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn dimacs() {
+
+        let dimacs_content = "c This is a comment
+        p cnf 3 2
+        1 -3 0
+        ";
+        let mut cnf=Vec::new();
+        match parse_dimacs_cnf(dimacs_content, false,&mut cnf) {
+            Ok(_) => {
+                assert_eq!(cnf.len(), 1);
+            }
+            Err(_e) => assert_eq!("result", "should be ok"),
+        }
+    }
+    #[test]
+    fn dimacs_strict() {
+
+        let dimacs_content = "c This is a comment
+        p cnf 2 2
+        1 -3 0
+        ";
+        let mut cnf=Vec::new();
+        assert!(matches!(parse_dimacs_cnf(dimacs_content, true,&mut cnf), Err(_)));
+    }
+}

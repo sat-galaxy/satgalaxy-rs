@@ -55,7 +55,7 @@ impl<'a> SatBuild<'a> {
         self.build.cpp(cpp);
         self
     }
-    fn build(&mut self, header: &str) {
+    fn build(&mut self, _header: &str) {
         self.build
             .compile(format!("satgalaxy_{}", self.name).as_str());
         // let bindings = bindgen::Builder::default()

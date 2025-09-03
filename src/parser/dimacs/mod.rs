@@ -77,15 +77,6 @@ pub fn parse_dimacs_cnf<D: AsDimacs>(
         for inner_pair in pair.into_inner() {
             match inner_pair.as_rule() {
                 Rule::clause => {
-                    if strict {
-                        if clauses > 0 && num_clauses >= clauses {
-                            return Err(ParserError::TooManyClauses(num_clauses, clauses));
-                        }
-                        if num_vars > 0 && num_vars >= variables {
-                            return Err(ParserError::TooManyVariables(num_vars, variables));
-                        }
-                    }
-
                     let mut clause = Vec::<i32>::new();
                     for lit_pair in inner_pair.into_inner() {
                         let lit = lit_pair.as_str().parse::<i32>()?;
@@ -95,6 +86,14 @@ pub fn parse_dimacs_cnf<D: AsDimacs>(
                     }
                     num_clauses += 1;
                     dim.push_clause(clause)?;
+                    if strict {
+                        if clauses > 0 && num_clauses >= clauses {
+                            return Err(ParserError::TooManyClauses(num_clauses, clauses));
+                        }
+                        if num_vars > 0 && num_vars >= variables {
+                            return Err(ParserError::TooManyVariables(num_vars, variables));
+                        }
+                    }
                 }
                 Rule::def => {
                     for def_rule in inner_pair.into_inner() {
@@ -164,8 +163,7 @@ impl<R: Read> SmartReader<io::Chain<Cursor<Vec<u8>>, R>> {
     pub fn new(reader: R) -> Result<Self, io::Error> {
         let mut reader = reader;
         let mut header = [0u8; 6];
-        let len=reader.read(&mut header)?;
-
+        let len = reader.read(&mut header)?;
 
         let header_cursor = Cursor::new(header[..len].to_vec());
         let chained_reader = BufReader::new(header_cursor.chain(reader));
@@ -180,9 +178,7 @@ impl<R: Read> SmartReader<io::Chain<Cursor<Vec<u8>>, R>> {
                 let decoder = GzDecoder::new(chained_reader);
                 Ok(Self::Gzip(decoder))
             }
-            _ => {
-                Ok(Self::Plain(chained_reader))
-            },
+            _ => Ok(Self::Plain(chained_reader)),
         }
     }
 }

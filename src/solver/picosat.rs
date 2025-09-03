@@ -18,7 +18,7 @@
 #![allow(dead_code)]
 
 mod binding {
-     include!("../../bindings/picosat_bindings.rs");
+    include!("../../bindings/picosat_bindings.rs");
 }
 
 use std::{collections::HashSet, fmt::Display, os::raw, ptr::NonNull};
@@ -80,11 +80,11 @@ fn ptr_to_vec<T: Display + PartialEq + std::cmp::PartialEq<i32>>(ptr: *const T) 
 /// ```rust
 /// use satgalaxy::solver::{PicoSATSolver, SatStatus, SatSolver};
 /// let mut solver = PicoSATSolver::new();
-///     solver.add_clause(&vec![1, 2]);
-///     solver.add_clause(&vec![-1, -2]);
-///     solver.add_clause(&vec![3]);
+///     solver.push_clause(&vec![1, 2]);
+///     solver.push_clause(&vec![-1, -2]);
+///     solver.push_clause(&vec![3]);
 ///
-/// match solver.solve() {
+/// match solver.solve_model().unwrap() {
 ///    SatStatus::Satisfiable(vec) => {
 ///         println!("Satisfiable solution: {:?}", vec);
 ///     },
@@ -1038,5 +1038,32 @@ impl Drop for PicoSATSolver {
         unsafe {
             binding::picosat_s_reset(self.inner.as_ptr());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::solver::SatSolver;
+    use crate::solver::SatStatus;
+
+    use super::*;
+    #[test]
+    fn unsat() {
+        let mut solver = PicoSATSolver::new();
+        SatSolver::push_clause(&mut solver, &vec![1]).unwrap();
+        SatSolver::push_clause(&mut solver, &vec![-1]).unwrap();
+        assert!(matches!(
+            solver.solve_model().unwrap(),
+            SatStatus::Unsatisfiable
+        ));
+    }
+    #[test]
+    fn sat() {
+        let mut solver = PicoSATSolver::new();
+        SatSolver::push_clause(&mut solver, &vec![1, 2]).unwrap();
+        SatSolver::push_clause(&mut solver, &vec![-1]).unwrap();
+        assert!(
+            matches!(solver.solve_model().unwrap(),SatStatus::Satisfiable(x) if x.eq(&vec![2]))
+        );
     }
 }
